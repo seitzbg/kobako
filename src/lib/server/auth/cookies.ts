@@ -1,11 +1,12 @@
 import type { Cookies } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 import { SESSION_COOKIE } from './session';
 
 export function setSessionCookie(cookies: Cookies, token: string, expiresAt: Date): void {
 	cookies.set(SESSION_COOKIE, token, {
 		httpOnly: true,
 		sameSite: 'lax',
-		secure: process.env.NODE_ENV === 'production',
+		secure: !dev,
 		expires: expiresAt,
 		path: '/'
 	});
