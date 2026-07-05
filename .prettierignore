@@ -7,3 +7,6 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# SDD workspace (git-ignored planning scratch)
+.superpowers/
