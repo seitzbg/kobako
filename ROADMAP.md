@@ -10,7 +10,7 @@
 
 Deferred as acceptable for a v1 self-hosted foundation, tracked here so they stay conscious decisions:
 
-- **Deployment story:** swap `@sveltejs/adapter-auto` → `adapter-node`, add an app `Dockerfile` and an `app:` service in `docker-compose.yml` so the "one container + Postgres" architecture is real (today the app runs via `pnpm dev`). Derive cookie `secure` from `$app/environment` rather than `process.env.NODE_ENV` as part of this.
+- [x] **Deployment story (done):** `@sveltejs/adapter-node` Node server, multi-stage `Dockerfile`, and a compose `app` service that auto-migrates on startup; cookie `secure` now derives from `!dev`. Runs behind a TLS reverse proxy (`ORIGIN`, configurable `APP_PORT`).
 - **Defense-in-depth:** add `(app)/+layout.server.ts` calling `requireUser`, so any future `(app)/*` route is guarded by default (currently `/invites` self-guards only).
 - **Bootstrap seed:** a `pnpm seed:invite` command so the first admin doesn't need a manual `psql` insert — also gives the first-user-admin branch something to test against.
 - **Test isolation:** per-test transaction or ephemeral schema so tests don't share one mutable DB; add an isolated test that actually exercises the first-user-becomes-admin path; document the git-ignored `.env.test`.
