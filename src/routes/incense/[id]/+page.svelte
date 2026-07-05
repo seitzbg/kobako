@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { enhance } from '$app/forms';
 	import { SCORE_AXES, formatLabel, scentFamilyLabel } from '$lib/incense';
-	import type { PageData } from './$types';
+	import type { PageData, ActionData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	const facts = $derived(
 		[
@@ -82,6 +83,37 @@
 	<p class="muted">No reviews yet — be the first below.</p>
 {/if}
 
+<h2 style="margin-top:2rem">Your review</h2>
+<form method="POST" action="?/review" use:enhance class="card review-form">
+	{#if form?.error}<p class="alert alert-error">{form.error}</p>{/if}
+	{#if form?.saved}<p class="alert saved">Saved.</p>{/if}
+	<div class="sliders">
+		{#each SCORE_AXES as axis (axis.key)}
+			<label class="slider">
+				<span class="field-label">{axis.label}</span>
+				<select name={axis.key}>
+					<option value="">—</option>
+					{#each [0, 1, 2, 3, 4, 5] as n (n)}
+						<option value={n} selected={data.myReview?.[axis.key] === n}>{n}</option>
+					{/each}
+				</select>
+			</label>
+		{/each}
+	</div>
+	<div class="field">
+		<label class="field-label" for="reviewText">Notes</label>
+		<textarea
+			id="reviewText"
+			name="reviewText"
+			rows="4"
+			placeholder="How did it smell, burn, evolve?">{data.myReview?.reviewText ?? ''}</textarea
+		>
+	</div>
+	<button class="btn-primary" type="submit"
+		>{data.myReview ? 'Update review' : 'Save review'}</button
+	>
+</form>
+
 <style>
 	.head-row {
 		display: flex;
@@ -134,5 +166,24 @@
 	.text {
 		margin: 0.75rem 0 0;
 		white-space: pre-wrap;
+	}
+	.review-form {
+		margin-top: 0.5rem;
+	}
+	.sliders {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+		gap: 1rem;
+		margin-bottom: 1rem;
+	}
+	.slider {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+	.alert.saved {
+		color: var(--ok);
+		background: color-mix(in srgb, var(--ok) 14%, transparent);
+		border-color: color-mix(in srgb, var(--ok) 40%, transparent);
 	}
 </style>

@@ -1,7 +1,7 @@
 import { eq, sql, desc } from 'drizzle-orm';
 import { db } from './client';
 import { incense, reviews, users, type Incense, type Review } from './schema';
-import type { IncenseInput, Format, ScentFamily } from '$lib/incense';
+import type { IncenseInput, ReviewInput, Format, ScentFamily } from '$lib/incense';
 
 export async function createIncense(input: IncenseInput, userId: string): Promise<Incense> {
 	const [row] = await db
@@ -63,4 +63,28 @@ export async function listReviewsForIncense(id: string): Promise<ReviewWithUser[
 		.where(eq(reviews.incenseId, id))
 		.orderBy(users.username);
 	return rows.map((r) => ({ ...r.review, username: r.username }));
+}
+
+export async function upsertReview(
+	incenseId: string,
+	userId: string,
+	input: ReviewInput
+): Promise<Review> {
+	const [row] = await db
+		.insert(reviews)
+		.values({ incenseId, userId, ...input })
+		.onConflictDoUpdate({
+			target: [reviews.incenseId, reviews.userId],
+			set: {
+				scent: input.scent,
+				throwSmoke: input.throwSmoke,
+				longevity: input.longevity,
+				value: input.value,
+				overall: input.overall,
+				reviewText: input.reviewText,
+				updatedAt: new Date()
+			}
+		})
+		.returning();
+	return row;
 }
