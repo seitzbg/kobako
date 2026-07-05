@@ -12,9 +12,7 @@
 
 	onMount(() => {
 		const forced = document.documentElement.getAttribute('data-theme');
-		dark = forced
-			? forced === 'dark'
-			: window.matchMedia('(prefers-color-scheme: dark)').matches;
+		dark = forced ? forced === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
 	});
 
 	function toggleTheme() {

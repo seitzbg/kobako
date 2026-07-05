@@ -18,7 +18,7 @@
 	<div class="mark">香</div>
 	<h2 style="font-size:1.2rem;margin:0">Your incense catalog lands here soon</h2>
 	<p>
-		Ratings, written reviews and a dated burn log for every stick, cone and coil —
-		arriving in the next chapter.
+		Ratings, written reviews and a dated burn log for every stick, cone and coil — arriving in the
+		next chapter.
 	</p>
 </div>

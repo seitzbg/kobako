@@ -11,8 +11,7 @@
 			// wrong palette. Absence of the attribute = follow the OS preference.
 			try {
 				var t = localStorage.getItem('kobako-theme');
-				if (t === 'light' || t === 'dark')
-					document.documentElement.setAttribute('data-theme', t);
+				if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
 			} catch (e) {}
 		</script>
 		%sveltekit.head%

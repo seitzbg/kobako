@@ -24,13 +24,7 @@
 			</div>
 			<div class="field">
 				<label class="field-label" for="password">Password</label>
-				<input
-					id="password"
-					name="password"
-					type="password"
-					autocomplete="new-password"
-					required
-				/>
+				<input id="password" name="password" type="password" autocomplete="new-password" required />
 			</div>
 			<button class="btn-primary btn-block" type="submit">Create account</button>
 		</form>

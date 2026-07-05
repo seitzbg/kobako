@@ -28,20 +28,18 @@
 	--halo: rgba(180, 71, 46, 0.05);
 
 	--shadow-sm: 0 1px 2px rgba(62, 46, 30, 0.07);
-	--shadow-md:
-		0 6px 22px -10px rgba(62, 46, 30, 0.22), 0 2px 6px -3px rgba(62, 46, 30, 0.1);
+	--shadow-md: 0 6px 22px -10px rgba(62, 46, 30, 0.22), 0 2px 6px -3px rgba(62, 46, 30, 0.1);
 	--shadow-lg: 0 24px 54px -20px rgba(50, 38, 24, 0.3);
 
 	--radius-sm: 8px;
 	--radius: 12px;
 	--radius-lg: 18px;
 
-	--font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua',
-		Georgia, 'Times New Roman', serif;
-	--font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-		sans-serif;
-	--font-mono: 'SFMono-Regular', ui-monospace, 'JetBrains Mono', Menlo, Consolas,
-		monospace;
+	--font-serif:
+		'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman',
+		serif;
+	--font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--font-mono: 'SFMono-Regular', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
 
 	--maxw: 960px;
 }
@@ -68,8 +66,7 @@
 		--focus: rgba(219, 111, 78, 0.32);
 		--halo: rgba(219, 111, 78, 0.06);
 		--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-		--shadow-md:
-			0 8px 26px -12px rgba(0, 0, 0, 0.6), 0 2px 6px -3px rgba(0, 0, 0, 0.5);
+		--shadow-md: 0 8px 26px -12px rgba(0, 0, 0, 0.6), 0 2px 6px -3px rgba(0, 0, 0, 0.5);
 		--shadow-lg: 0 26px 60px -22px rgba(0, 0, 0, 0.7);
 	}
 }
@@ -90,8 +87,7 @@
 	--focus: rgba(219, 111, 78, 0.32);
 	--halo: rgba(219, 111, 78, 0.06);
 	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-	--shadow-md:
-		0 8px 26px -12px rgba(0, 0, 0, 0.6), 0 2px 6px -3px rgba(0, 0, 0, 0.5);
+	--shadow-md: 0 8px 26px -12px rgba(0, 0, 0, 0.6), 0 2px 6px -3px rgba(0, 0, 0, 0.5);
 	--shadow-lg: 0 26px 60px -22px rgba(0, 0, 0, 0.7);
 }
 
