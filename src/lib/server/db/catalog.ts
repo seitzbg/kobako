@@ -3,16 +3,34 @@ import { db } from './client';
 import { incense, reviews, users, type Incense, type Review } from './schema';
 import type { IncenseInput, ReviewInput, Format, ScentFamily } from '$lib/incense';
 
-export async function createIncense(input: IncenseInput, userId: string): Promise<Incense> {
+export async function createIncense(
+	input: IncenseInput,
+	userId: string,
+	imagePath: string | null = null
+): Promise<Incense> {
 	const [row] = await db
 		.insert(incense)
-		.values({ ...input, createdBy: userId })
+		.values({ ...input, imagePath, createdBy: userId })
 		.returning();
 	return row;
 }
 
 export async function getIncense(id: string): Promise<Incense | undefined> {
 	const [row] = await db.select().from(incense).where(eq(incense.id, id));
+	return row;
+}
+
+export async function findBySourceUrl(url: string): Promise<Incense | undefined> {
+	const [row] = await db.select().from(incense).where(eq(incense.sourceUrl, url));
+	return row;
+}
+
+export async function findSimilarByName(name: string): Promise<Incense | undefined> {
+	const [row] = await db
+		.select()
+		.from(incense)
+		.where(sql`lower(${incense.name}) = lower(${name})`)
+		.limit(1);
 	return row;
 }
 

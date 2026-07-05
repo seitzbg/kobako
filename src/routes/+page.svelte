@@ -12,7 +12,10 @@
 		<h1>The catalog</h1>
 		<div class="rule"></div>
 	</div>
-	<a class="btn-primary" href={resolve('/incense/new')}>＋ Add incense</a>
+	<div class="head-actions">
+		<a class="btn" href={resolve('/incense/import')}>Import from URL</a>
+		<a class="btn-primary" href={resolve('/incense/new')}>＋ Add incense</a>
+	</div>
 </div>
 
 {#if data.items.length}
@@ -58,6 +61,10 @@
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: 1rem;
+	}
+	.head-actions {
+		display: flex;
+		gap: 0.5rem;
 	}
 	.cards {
 		list-style: none;
