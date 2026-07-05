@@ -13,3 +13,7 @@ bun.lockb
 
 # Drizzle-generated migration metadata (machine-formatted, not hand-written)
 /drizzle/meta/
+
+# Importer test fixtures: real scraped HTML/JSON captures kept byte-exact
+# (prettier's HTML parser rejects real-world malformed markup anyway)
+/src/lib/server/import/fixtures/
