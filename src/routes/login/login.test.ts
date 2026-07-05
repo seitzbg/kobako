@@ -59,7 +59,7 @@ describe('POST /login', () => {
 
 	it('rejects an incorrect password without setting a cookie', async () => {
 		const username = `user_${Date.now()}_wrongpw`;
-		await createUser(username, 'hunter2hunter2');
+		const user = await createUser(username, 'hunter2hunter2');
 		const cookies = fakeCookies();
 		const formData = buildForm({ username, password: 'wrong-password' });
 
@@ -67,6 +67,9 @@ describe('POST /login', () => {
 		expect((result as { status: number } | undefined)?.status).toBe(400);
 
 		expect(cookies.store[SESSION_COOKIE]).toBeUndefined();
+
+		const rows = await db.select().from(sessions).where(eq(sessions.userId, user.id));
+		expect(rows).toHaveLength(0);
 	});
 
 	it('rejects an unknown username', async () => {
@@ -76,9 +79,14 @@ describe('POST /login', () => {
 			password: 'hunter2hunter2'
 		});
 
+		const sessionsBefore = await db.select().from(sessions);
+
 		const result = await actions.default(buildEvent(formData, cookies));
 		expect((result as { status: number } | undefined)?.status).toBe(400);
 
 		expect(cookies.store[SESSION_COOKIE]).toBeUndefined();
+
+		const sessionsAfter = await db.select().from(sessions);
+		expect(sessionsAfter).toHaveLength(sessionsBefore.length);
 	});
 });
