@@ -1,7 +1,7 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql, desc } from 'drizzle-orm';
 import { db } from './client';
-import { incense, type Incense } from './schema';
-import type { IncenseInput } from '$lib/incense';
+import { incense, reviews, type Incense } from './schema';
+import type { IncenseInput, Format, ScentFamily } from '$lib/incense';
 
 export async function createIncense(input: IncenseInput, userId: string): Promise<Incense> {
 	const [row] = await db
@@ -23,4 +23,32 @@ export async function updateIncense(id: string, input: IncenseInput): Promise<In
 		.where(eq(incense.id, id))
 		.returning();
 	return row;
+}
+
+export type IncenseSummary = {
+	id: string;
+	name: string;
+	brand: string | null;
+	format: Format | null;
+	scentFamily: ScentFamily | null;
+	reviewCount: number;
+	avgOverall: number | null;
+};
+
+export async function listIncenseSummaries(): Promise<IncenseSummary[]> {
+	const rows = await db
+		.select({
+			id: incense.id,
+			name: incense.name,
+			brand: incense.brand,
+			format: incense.format,
+			scentFamily: incense.scentFamily,
+			reviewCount: sql<number>`count(${reviews.id})::int`,
+			avgOverall: sql<number | null>`round(avg(${reviews.overall}), 1)::float8`
+		})
+		.from(incense)
+		.leftJoin(reviews, eq(reviews.incenseId, incense.id))
+		.groupBy(incense.id)
+		.orderBy(desc(incense.createdAt));
+	return rows as IncenseSummary[];
 }
