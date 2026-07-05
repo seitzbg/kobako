@@ -34,8 +34,7 @@
 		<div class="rule"></div>
 	</div>
 	<div class="head-actions">
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- /incense/[id]/edit route lands in Task 6; can't type-check via resolve() until that route exists -->
-		<a class="btn" href={`/incense/${data.item.id}/edit`}>Edit</a>
+		<a class="btn" href={resolve('/incense/[id]/edit', { id: data.item.id })}>Edit</a>
 		<a class="btn-quiet" href={resolve('/')}>← Catalog</a>
 	</div>
 </div>
