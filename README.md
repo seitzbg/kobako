@@ -45,11 +45,14 @@ create the first invite (see **First run** below) and register.
 
 ## First run
 
-Registration is invite-only and there's no seed data, so the very first invite
-has to be created by hand:
+Registration is invite-only and there's no seed data, so mint the very first
+invite with the seed script (either form prints a single-use token):
 
 ```sh
-docker compose exec db psql -U kobako -c "insert into invites (token) values ('bootstrap-me');"
+# local dev:
+pnpm seed:invite
+# deployed container:
+docker compose exec app node scripts/seed-invite.mjs
 ```
 
 Then visit `/register` and sign up with that token. The **first user ever
