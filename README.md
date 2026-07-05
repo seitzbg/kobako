@@ -24,6 +24,25 @@ pnpm dev
 The app will be available at the URL printed by `pnpm dev` (typically
 `http://localhost:5173`).
 
+## Run in Docker (production)
+
+The whole stack (app + Postgres) runs from the committed `Dockerfile` and
+`docker-compose.yml`. The app is a Node server (SvelteKit `adapter-node`) that
+**applies pending database migrations on startup**, then serves on port `3000`.
+It is designed to sit behind a TLS-terminating reverse proxy.
+
+```sh
+cp .env.example .env
+# In .env, set:
+#   POSTGRES_PASSWORD  — a real password
+#   ORIGIN             — the public HTTPS URL, e.g. https://kobako.example.com
+docker compose up -d --build
+```
+
+Point your reverse proxy at the app container's port `3000`. The session cookie
+is `Secure`, so the app must be reached over HTTPS (through the proxy). Then
+create the first invite (see **First run** below) and register.
+
 ## First run
 
 Registration is invite-only and there's no seed data, so the very first invite

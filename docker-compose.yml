@@ -15,5 +15,18 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-kobako}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-kobako}
+      ORIGIN: ${ORIGIN:?ORIGIN must be set to the public URL, e.g. https://kobako.example.com (see .env.example)}
+      PORT: 3000
+    ports:
+      - '${APP_PORT:-3000}:3000'
+    restart: unless-stopped
+
 volumes:
   kobako_pgdata:
