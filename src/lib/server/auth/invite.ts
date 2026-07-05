@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { and, eq, isNull } from 'drizzle-orm';
-import { db } from '../db/client';
+import { db, type Executor } from '../db/client';
 import { invites, type Invite } from '../db/schema';
 
 export async function createInvite(createdBy: string | null): Promise<Invite> {
@@ -9,9 +9,9 @@ export async function createInvite(createdBy: string | null): Promise<Invite> {
 	return invite;
 }
 
-export async function consumeInvite(token: string): Promise<Invite | null> {
+export async function consumeInvite(token: string, exec: Executor = db): Promise<Invite | null> {
 	// Atomic: only update rows that are unused, return the updated row (or nothing).
-	const [invite] = await db
+	const [invite] = await exec
 		.update(invites)
 		.set({ usedAt: new Date() })
 		.where(and(eq(invites.token, token), isNull(invites.usedAt)))

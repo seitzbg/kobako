@@ -1,6 +1,6 @@
 import { randomBytes, createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { db } from '../db/client';
+import { db, type Executor } from '../db/client';
 import { sessions, users, type Session, type User } from '../db/schema';
 
 export const SESSION_COOKIE = 'kobako_session';
@@ -14,10 +14,14 @@ function hashToken(token: string): string {
 	return createHash('sha256').update(token).digest('hex');
 }
 
-export async function createSession(token: string, userId: string): Promise<Session> {
+export async function createSession(
+	token: string,
+	userId: string,
+	exec: Executor = db
+): Promise<Session> {
 	const id = hashToken(token);
 	const expiresAt = new Date(Date.now() + 30 * DAY);
-	const [session] = await db.insert(sessions).values({ id, userId, expiresAt }).returning();
+	const [session] = await exec.insert(sessions).values({ id, userId, expiresAt }).returning();
 	return session;
 }
 

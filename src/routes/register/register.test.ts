@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { users, invites } from '$lib/server/db/schema';
 import { createInvite } from '$lib/server/auth/invite';
+import { createUser } from '$lib/server/auth/user';
 import { SESSION_COOKIE } from '$lib/server/auth/session';
 import { actions } from './+page.server';
 
@@ -115,5 +116,43 @@ describe('POST /register', () => {
 
 		const rows = await db.select().from(users).where(eq(users.username, username));
 		expect(rows).toHaveLength(0);
+	});
+
+	it('does not burn the invite when registration fails on a duplicate username', async () => {
+		const uname = `dup_${Date.now()}`;
+		await createUser(uname, 'hunter2hunter2');
+
+		const invite = await createInvite(null);
+		const cookies = fakeCookies();
+		const formData = buildForm({
+			invite: invite.token,
+			username: uname,
+			password: 'hunter2hunter2'
+		});
+
+		const result = await actions.default(buildEvent(formData, cookies));
+		expect((result as { status: number } | undefined)?.status).toBe(400);
+
+		const freshUsername = `user_${Date.now()}_retry`;
+		const retryCookies = fakeCookies();
+		const retryForm = buildForm({
+			invite: invite.token,
+			username: freshUsername,
+			password: 'hunter2hunter2'
+		});
+
+		let caught: unknown;
+		try {
+			await actions.default(buildEvent(retryForm, retryCookies));
+		} catch (e) {
+			caught = e;
+		}
+
+		if (!isRedirect(caught)) throw new Error('expected a redirect to be thrown');
+		expect(caught.status).toBe(303);
+		expect(caught.location).toBe('/');
+
+		const [user] = await db.select().from(users).where(eq(users.username, freshUsername));
+		expect(user).toBeDefined();
 	});
 });
