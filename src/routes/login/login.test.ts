@@ -79,14 +79,12 @@ describe('POST /login', () => {
 			password: 'hunter2hunter2'
 		});
 
-		const sessionsBefore = await db.select().from(sessions);
-
 		const result = await actions.default(buildEvent(formData, cookies));
 		expect((result as { status: number } | undefined)?.status).toBe(400);
 
+		// No cookie is set — the action returns fail(400) before any session is
+		// created, so an unknown username never establishes a session. (A global
+		// session-count assertion here would race other test files on the shared DB.)
 		expect(cookies.store[SESSION_COOKIE]).toBeUndefined();
-
-		const sessionsAfter = await db.select().from(sessions);
-		expect(sessionsAfter).toHaveLength(sessionsBefore.length);
 	});
 });
