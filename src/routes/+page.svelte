@@ -27,13 +27,13 @@
 						{#if item.scentFamily}<span class="tag">{scentFamilyLabel(item.scentFamily)}</span>{/if}
 					</span>
 					<span class="score">
-						{#if item.avgOverall !== null}
-							★ {item.avgOverall}
-							<span class="muted"
-								>· {item.reviewCount} review{item.reviewCount === 1 ? '' : 's'}</span
-							>
-						{:else}
+						{#if item.reviewCount === 0}
 							<span class="muted">No reviews yet</span>
+						{:else}
+							{#if item.avgOverall !== null}★ {item.avgOverall} <span class="muted">·</span>
+							{/if}
+							<span class="muted">{item.reviewCount} review{item.reviewCount === 1 ? '' : 's'}</span
+							>
 						{/if}
 					</span>
 				</a>

@@ -37,6 +37,28 @@ describe('home catalog load', () => {
 		expect(mine!.avgOverall).toBe(4);
 	});
 
+	it('counts a review even when its overall score is blank', async () => {
+		// A user may rate some axes but leave Overall unset. The item must still
+		// register as reviewed (reviewCount >= 1) with a null average — the grid
+		// keys its "No reviews yet" state off reviewCount, not avgOverall.
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `NoOverall ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		await db.insert(reviews).values({ incenseId: item.id, userId: u.id, scent: 4 });
+
+		const result = (await load({
+			locals: { user: u }
+		} as unknown as Parameters<typeof load>[0])) as {
+			items: { id: string; reviewCount: number; avgOverall: number | null }[];
+		};
+
+		const mine = result.items.find((i) => i.id === item.id);
+		expect(mine!.reviewCount).toBe(1);
+		expect(mine!.avgOverall).toBeNull();
+	});
+
 	it('redirects anonymous visitors to /login', async () => {
 		await expect(
 			load({ locals: { user: null } } as unknown as Parameters<typeof load>[0])
