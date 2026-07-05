@@ -19,8 +19,7 @@
 	<ul class="cards">
 		{#each data.items as item (item.id)}
 			<li>
-				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- /incense/[id] route lands in Task 4; can't type-check via resolve() until that route exists -->
-				<a class="incense-card" href={`/incense/${item.id}`}>
+				<a class="incense-card" href={resolve('/incense/[id]', { id: item.id })}>
 					<span class="name">{item.name}</span>
 					{#if item.brand}<span class="brand muted">{item.brand}</span>{/if}
 					<span class="meta">

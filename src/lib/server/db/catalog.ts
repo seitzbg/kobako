@@ -1,6 +1,6 @@
 import { eq, sql, desc } from 'drizzle-orm';
 import { db } from './client';
-import { incense, reviews, type Incense } from './schema';
+import { incense, reviews, users, type Incense, type Review } from './schema';
 import type { IncenseInput, Format, ScentFamily } from '$lib/incense';
 
 export async function createIncense(input: IncenseInput, userId: string): Promise<Incense> {
@@ -51,4 +51,16 @@ export async function listIncenseSummaries(): Promise<IncenseSummary[]> {
 		.groupBy(incense.id)
 		.orderBy(desc(incense.createdAt));
 	return rows as IncenseSummary[];
+}
+
+export type ReviewWithUser = Review & { username: string };
+
+export async function listReviewsForIncense(id: string): Promise<ReviewWithUser[]> {
+	const rows = await db
+		.select({ review: reviews, username: users.username })
+		.from(reviews)
+		.innerJoin(users, eq(users.id, reviews.userId))
+		.where(eq(reviews.incenseId, id))
+		.orderBy(users.username);
+	return rows.map((r) => ({ ...r.review, username: r.username }));
 }
