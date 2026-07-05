@@ -67,6 +67,7 @@ export type IncenseInput = {
 	sourceUrl: string | null;
 	price: string | null;
 	currency: string | null;
+	description: string | null;
 };
 
 export type ReviewInput = {
@@ -122,6 +123,10 @@ export function parseIncenseForm(form: FormData): Parsed<IncenseInput> {
 	if (sourceUrl && !/^https?:\/\/\S+$/i.test(sourceUrl))
 		return { ok: false, error: 'Source URL must start with http:// or https://.' };
 
+	const description = nullIfEmpty(str(form, 'description'));
+	if (description && description.length > 4000)
+		return { ok: false, error: 'Description is too long (max 4000 characters).' };
+
 	return {
 		ok: true,
 		value: {
@@ -137,7 +142,8 @@ export function parseIncenseForm(form: FormData): Parsed<IncenseInput> {
 			sourceShop: nullIfEmpty(str(form, 'sourceShop')),
 			sourceUrl,
 			price,
-			currency: nullIfEmpty(str(form, 'currency'))
+			currency: nullIfEmpty(str(form, 'currency')),
+			description
 		}
 	};
 }
@@ -172,4 +178,12 @@ export function parseReviewForm(form: FormData): Parsed<ReviewInput> {
 			reviewText: nullIfEmpty(str(form, 'reviewText'))
 		}
 	};
+}
+
+export function shopNameFromUrl(raw: string): string | null {
+	try {
+		return new URL(raw).hostname.replace(/^www\./, '') || null;
+	} catch {
+		return null;
+	}
 }

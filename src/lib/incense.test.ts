@@ -6,7 +6,8 @@ import {
 	formatLabel,
 	scentFamilyLabel,
 	parseIncenseForm,
-	parseReviewForm
+	parseReviewForm,
+	shopNameFromUrl
 } from './incense';
 
 function fd(entries: Record<string, string>): FormData {
@@ -88,6 +89,19 @@ describe('parseIncenseForm', () => {
 		expect(parseIncenseForm(fd({ name: 'x', sticksPerBox: '-3' })).ok).toBe(false);
 		expect(parseIncenseForm(fd({ name: 'x', price: 'free' })).ok).toBe(false);
 		expect(parseIncenseForm(fd({ name: 'x', price: '-5' })).ok).toBe(false);
+	});
+
+	it('captures an optional description and rejects an over-long one', () => {
+		const ok = parseIncenseForm(fd({ name: 'x', description: '  A nice scent  ' }));
+		expect(ok.ok).toBe(true);
+		if (ok.ok) expect(ok.value.description).toBe('A nice scent');
+		const long = parseIncenseForm(fd({ name: 'x', description: 'a'.repeat(4001) }));
+		expect(long.ok).toBe(false);
+	});
+
+	it('derives a shop name from a URL host', () => {
+		expect(shopNameFromUrl('https://www.kikohincense.com/products/x')).toBe('kikohincense.com');
+		expect(shopNameFromUrl('not a url')).toBeNull();
 	});
 });
 

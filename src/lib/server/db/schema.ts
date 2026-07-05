@@ -72,6 +72,8 @@ export const incense = pgTable('incense', {
 	sourceUrl: text('source_url'),
 	price: numeric('price', { precision: 10, scale: 2 }),
 	currency: text('currency'),
+	description: text('description'),
+	imagePath: text('image_path'),
 	createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()

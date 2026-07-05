@@ -50,6 +50,10 @@
 			<label class="field-label" for="ingredients">Ingredients</label>
 			<textarea id="ingredients" name="ingredients" rows="2">{it.ingredients ?? ''}</textarea>
 		</div>
+		<div class="field span-2">
+			<label class="field-label" for="description">Description</label>
+			<textarea id="description" name="description" rows="3">{it.description ?? ''}</textarea>
+		</div>
 		<div class="field">
 			<label class="field-label" for="length">Length</label>
 			<input id="length" name="length" value={it.length ?? ''} />

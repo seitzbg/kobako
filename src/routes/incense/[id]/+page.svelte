@@ -49,6 +49,9 @@
 		{/each}
 	</dl>
 {/if}
+{#if data.item.description}
+	<p class="description">{data.item.description}</p>
+{/if}
 {#if data.item.sourceUrl}
 	<p class="muted">
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external absolute URL (source shop), not a SvelteKit internal route -->
@@ -139,6 +142,11 @@
 	}
 	.facts dd {
 		margin: 0.15rem 0 0;
+	}
+	.description {
+		white-space: pre-wrap;
+		color: var(--ink-soft);
+		max-width: 68ch;
 	}
 	.reviews {
 		display: grid;
