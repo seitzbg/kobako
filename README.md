@@ -1,42 +1,39 @@
-# sv
+# Kōbako (香箱)
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Kōbako is a self-hosted web app for cataloging and reviewing incense — a single
+shared catalog with per-user multi-axis reviews, burn logs, and collection
+tracking. It's invite-only: there's no public sign-up, so it's meant to be run
+for yourself or a small group of friends on your own infrastructure.
 
-## Creating a project
+## Prerequisites
 
-If you're seeing this, you've probably already done this step. Congrats!
+- [Docker](https://docs.docker.com/get-docker/) (for the Postgres database)
+- [pnpm](https://pnpm.io/installation)
+- [Node.js](https://nodejs.org/) 20 (see `.nvmrc`)
 
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-pnpm dlx sv@0.16.2 create --template minimal --types ts --add prettier eslint vitest="usages:unit" --no-download-check --install pnpm kobako
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Quickstart
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+cp .env.example .env      # then edit POSTGRES_PASSWORD for anything non-local
+docker compose up -d db
+pnpm install
+pnpm drizzle-kit migrate
+pnpm dev
 ```
 
-## Building
+The app will be available at the URL printed by `pnpm dev` (typically
+`http://localhost:5173`).
 
-To create a production version of your app:
+## First run
+
+Registration is invite-only and there's no seed data, so the very first invite
+has to be created by hand:
 
 ```sh
-npm run build
+docker compose exec db psql -U kobako -c "insert into invites (token) values ('bootstrap-me');"
 ```
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Then visit `/register` and sign up with that token. The **first user ever
+registered** automatically becomes an **admin**, regardless of which invite
+was used. Once signed in as admin, visit `/invites` to generate further,
+single-use invite codes for anyone else you want to give access to.
