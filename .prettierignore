@@ -7,3 +7,9 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# SDD workspace (git-ignored planning scratch)
+.superpowers/
+
+# Drizzle-generated migration metadata (machine-formatted, not hand-written)
+/drizzle/meta/
