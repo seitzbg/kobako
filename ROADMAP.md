@@ -3,7 +3,15 @@
 ## v1 (in progress)
 
 - [x] Plan 1 — Foundation & auth (invite-only, sessions, roles, app shell)
-- [ ] Plan 2 — Shared catalog, per-user multi-axis reviews, burn log, collection status, tags, browse/search, rating comparison
+- [x] Warm Washi design system — themed UI (washi-paper light + "smoke" dark, toggle), reusable components
+- [ ] Plan 2 — Shared catalog + per-user reviews
+  - [x] Shared catalog CRUD (add / browse / view / edit incense; format + scent-family)
+  - [x] Per-user multi-axis reviews (scent, throw/smoke, longevity, value, overall) + free-text notes
+  - [x] Compare everyone's ratings on an item; average + review counts on the grid
+  - [ ] Burn log (dated entries under a review)
+  - [ ] Collection status (owned / wishlist / sample / used-up)
+  - [ ] Tags
+  - [ ] Browse / search / filter
 - [ ] Plan 3 — Paste-URL importer (JSON-LD → OG → meta), SSRF guard, image caching, de-dup
 
 ## Hardening & follow-ups (from the Plan 1 whole-branch review)
