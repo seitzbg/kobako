@@ -31,6 +31,7 @@ export type IncenseSummary = {
 	brand: string | null;
 	format: Format | null;
 	scentFamily: ScentFamily | null;
+	imagePath: string | null;
 	reviewCount: number;
 	avgOverall: number | null;
 };
@@ -43,6 +44,7 @@ export async function listIncenseSummaries(): Promise<IncenseSummary[]> {
 			brand: incense.brand,
 			format: incense.format,
 			scentFamily: incense.scentFamily,
+			imagePath: incense.imagePath,
 			reviewCount: sql<number>`count(${reviews.id})::int`,
 			avgOverall: sql<number | null>`round(avg(${reviews.overall}), 1)::float8`
 		})

@@ -39,6 +39,9 @@
 	</div>
 </div>
 
+{#if data.item.imagePath}
+	<img class="hero" src={`/media/${data.item.imagePath}`} alt={data.item.name} />
+{/if}
 {#if facts.length}
 	<dl class="facts card">
 		{#each facts as [label, value] (label)}
@@ -127,6 +130,12 @@
 		display: flex;
 		gap: 0.5rem;
 		flex: none;
+	}
+	.hero {
+		max-width: 260px;
+		border-radius: var(--radius);
+		border: 1px solid var(--line);
+		margin-bottom: 1.5rem;
 	}
 	.facts {
 		display: grid;

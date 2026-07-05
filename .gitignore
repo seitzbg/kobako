@@ -24,3 +24,6 @@ vite.config.ts.timestamp-*
 
 # Drizzle
 /drizzle/meta/_journal.lock
+
+# Locally cached product images (dev DATA_DIR)
+/data

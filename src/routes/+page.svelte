@@ -20,6 +20,7 @@
 		{#each data.items as item (item.id)}
 			<li>
 				<a class="incense-card" href={resolve('/incense/[id]', { id: item.id })}>
+					{#if item.imagePath}<img class="thumb" src={`/media/${item.imagePath}`} alt="" />{/if}
 					<span class="name">{item.name}</span>
 					{#if item.brand}<span class="brand muted">{item.brand}</span>{/if}
 					<span class="meta">
@@ -86,6 +87,13 @@
 	.incense-card:hover {
 		border-color: var(--ink-faint);
 		box-shadow: var(--shadow-md);
+	}
+	.thumb {
+		width: 100%;
+		height: 130px;
+		object-fit: cover;
+		border-radius: var(--radius-sm);
+		margin-bottom: 0.5rem;
 	}
 	.name {
 		font-family: var(--font-serif);
