@@ -21,7 +21,7 @@ function isPrivateIp(ip: string): boolean {
 	if (v === 6) {
 		const l = ip.toLowerCase();
 		if (l === '::1' || l === '::') return true; // loopback / unspecified
-		if (l.startsWith('fe80')) return true; // link-local
+		if (/^fe[89ab]/.test(l)) return true; // link-local fe80::/10 (fe80–febf)
 		if (l.startsWith('fc') || l.startsWith('fd')) return true; // unique-local
 		if (l.startsWith('::ffff:')) return isPrivateIp(l.slice(7)); // v4-mapped
 		return false;
@@ -61,10 +61,12 @@ export async function safeFetch(
 	for (let hop = 0; hop <= maxRedirects; hop++) {
 		await assertPublicUrl(current); // re-validate EVERY hop (DNS-rebinding / redirect SSRF)
 		const ctrl = new AbortController();
+		// One timer for the whole hop — fetch AND the body read — so a slow-trickle
+		// response can't hold the connection open past the deadline. Aborting the
+		// signal also aborts the response stream mid-read.
 		const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-		let res: Response;
 		try {
-			res = await fetch(current, {
+			const res = await fetch(current, {
 				redirect: 'manual',
 				signal: ctrl.signal,
 				headers: {
@@ -72,32 +74,32 @@ export async function safeFetch(
 					Accept: opts.accept ?? 'text/html,application/json;q=0.9,*/*;q=0.8'
 				}
 			});
+
+			if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
+				current = new URL(res.headers.get('location')!, current).toString();
+				continue;
+			}
+
+			const contentType = res.headers.get('content-type') ?? '';
+			const reader = res.body?.getReader();
+			const chunks: Uint8Array[] = [];
+			let total = 0;
+			if (reader) {
+				for (;;) {
+					const { done, value } = await reader.read();
+					if (done) break;
+					total += value.byteLength;
+					if (total > maxBytes) {
+						await reader.cancel();
+						throw new SsrfError('Response exceeded the size limit.');
+					}
+					chunks.push(value);
+				}
+			}
+			return { url: current, status: res.status, contentType, body: Buffer.concat(chunks) };
 		} finally {
 			clearTimeout(timer);
 		}
-
-		if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
-			current = new URL(res.headers.get('location')!, current).toString();
-			continue;
-		}
-
-		const contentType = res.headers.get('content-type') ?? '';
-		const reader = res.body?.getReader();
-		const chunks: Uint8Array[] = [];
-		let total = 0;
-		if (reader) {
-			for (;;) {
-				const { done, value } = await reader.read();
-				if (done) break;
-				total += value.byteLength;
-				if (total > maxBytes) {
-					await reader.cancel();
-					throw new SsrfError('Response exceeded the size limit.');
-				}
-				chunks.push(value);
-			}
-		}
-		return { url: current, status: res.status, contentType, body: Buffer.concat(chunks) };
 	}
 	throw new SsrfError('Too many redirects.');
 }
