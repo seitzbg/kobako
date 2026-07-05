@@ -59,4 +59,45 @@ describe('/invites', () => {
 			load({ locals: { user: null } } as unknown as Parameters<typeof load>[0])
 		).rejects.toMatchObject({ status: 303, location: '/login' });
 	});
+
+	it('forbids a member from creating an invite', async () => {
+		const member = { id: 'x', role: 'member' } as unknown as User;
+
+		await expect(
+			actions.default({
+				locals: { user: member }
+			} as unknown as Parameters<typeof actions.default>[0])
+		).rejects.toMatchObject({ status: 403 });
+	});
+
+	it('redirects a signed-out visitor who tries to create an invite', async () => {
+		await expect(
+			actions.default({
+				locals: { user: null }
+			} as unknown as Parameters<typeof actions.default>[0])
+		).rejects.toMatchObject({ status: 303, location: '/login' });
+	});
+
+	it('lists invites newest-first', async () => {
+		const admin = await createAdmin();
+		const first = (await actions.default({
+			locals: { user: admin }
+		} as unknown as Parameters<typeof actions.default>[0])) as { created: string };
+		const second = (await actions.default({
+			locals: { user: admin }
+		} as unknown as Parameters<typeof actions.default>[0])) as { created: string };
+
+		const result = (await load({
+			locals: { user: admin }
+		} as unknown as Parameters<typeof load>[0])) as { invites: { token: string }[] };
+
+		const tokens = result.invites.map((i) => i.token);
+		const idxFirst = tokens.indexOf(first.created);
+		const idxSecond = tokens.indexOf(second.created);
+		expect(idxFirst).toBeGreaterThanOrEqual(0);
+		expect(idxSecond).toBeGreaterThanOrEqual(0);
+		// newest-first: the later-created invite sorts before the earlier one,
+		// regardless of any other invites in the shared DB.
+		expect(idxSecond).toBeLessThan(idxFirst);
+	});
 });
