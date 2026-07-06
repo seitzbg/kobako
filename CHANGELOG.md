@@ -22,3 +22,9 @@ All notable changes to this project are documented here. Format based on
   overall) plus free-text notes; one review per person per item, editable in place.
 - **Ratings comparison** — the item detail page compares everyone's ratings, with
   average overall score and review counts shown on the catalog grid.
+- **Paste-a-URL importer** — fetch a shop product page (SSRF-guarded: http/https
+  only, private/loopback/link-local IPs rejected on every redirect hop, with
+  timeout and size caps) and extract name / brand / price / description / image
+  via Shopify JSON → schema.org JSON-LD → Open Graph → `<meta>`, then confirm on a
+  prefilled form. Product images are cached locally and served by Kōbako
+  (`/media`); the catalog de-dupes by source URL and by name.

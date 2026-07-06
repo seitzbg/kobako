@@ -12,7 +12,14 @@
   - [ ] Collection status (owned / wishlist / sample / used-up)
   - [ ] Tags
   - [ ] Browse / search / filter
-- [ ] Plan 3 — Paste-URL importer (JSON-LD → OG → meta), SSRF guard, image caching, de-dup
+- [x] Plan 3 — Paste-URL importer: Shopify JSON → schema.org JSON-LD → Open Graph → meta, SSRF guard, local image caching, de-dup by URL + name
+
+## Next (unshipped v1)
+
+- [ ] Collection status (owned / wishlist / sample / used-up) — pick catalog items into your personal collection
+- [ ] Burn log (dated entries under a review)
+- [ ] Tags
+- [ ] Browse / search / filter
 
 ## Hardening & follow-ups (from the Plan 1 whole-branch review)
 
