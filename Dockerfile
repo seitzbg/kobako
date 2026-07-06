@@ -23,6 +23,10 @@ COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh
+# Cached product images live here on a mounted volume. Create + own it as `node`
+# BEFORE dropping privileges: Docker copies this dir's ownership onto a fresh
+# named volume, so the non-root runtime user can actually write cached images.
+RUN mkdir -p /data && chown node:node /data
 USER node
 EXPOSE 3000
 ENTRYPOINT ["./docker-entrypoint.sh"]

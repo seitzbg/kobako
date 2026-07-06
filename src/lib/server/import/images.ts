@@ -28,7 +28,11 @@ export async function cacheImage(
 		await mkdir(dataDir, { recursive: true });
 		await writeFile(join(dataDir, name), res.body);
 		return name;
-	} catch {
+	} catch (err) {
+		// Image caching is best-effort — an import still succeeds without an image.
+		// But log genuine failures (e.g. an unwritable DATA_DIR) so they aren't
+		// invisible: a silent swallow once hid a root-owned-volume permission bug.
+		console.warn(`cacheImage failed for ${imageUrl}:`, err instanceof Error ? err.message : err);
 		return null;
 	}
 }
