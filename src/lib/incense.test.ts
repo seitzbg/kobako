@@ -3,10 +3,13 @@ import {
 	FORMATS,
 	SCENT_FAMILIES,
 	SCORE_AXES,
+	CATALOG_SORTS,
 	formatLabel,
 	scentFamilyLabel,
 	parseIncenseForm,
 	parseReviewForm,
+	parseCatalogQuery,
+	isFiltered,
 	shopNameFromUrl
 } from './incense';
 
@@ -128,5 +131,46 @@ describe('parseReviewForm', () => {
 	it('rejects an out-of-range score', () => {
 		expect(parseReviewForm(fd({ scent: '9' })).ok).toBe(false);
 		expect(parseReviewForm(fd({ value: '-1' })).ok).toBe(false);
+	});
+});
+
+describe('parseCatalogQuery', () => {
+	const parse = (qs: string) => parseCatalogQuery(new URLSearchParams(qs));
+
+	it('defaults to an empty, newest query', () => {
+		expect(parse('')).toEqual({ q: '', formats: [], scents: [], sort: 'newest' });
+	});
+
+	it('reads and trims q, caps at 100 chars', () => {
+		expect(parse('q=%20%20kyara%20%20').q).toBe('kyara');
+		expect(parse(`q=${'a'.repeat(150)}`).q).toHaveLength(100);
+	});
+
+	it('keeps valid formats and scents, drops unknown ones, de-dupes', () => {
+		const f = parse('format=stick&format=coil&format=bogus&format=stick&scent=floral&scent=nope');
+		expect(f.formats).toEqual(['stick', 'coil']);
+		expect(f.scents).toEqual(['floral']);
+	});
+
+	it('accepts a known sort and falls back to newest for anything else', () => {
+		expect(parse('sort=top').sort).toBe('top');
+		expect(parse('sort=most_reviewed').sort).toBe('most_reviewed');
+		expect(parse('sort=sideways').sort).toBe('newest');
+	});
+
+	it('exposes the four sort options with newest first', () => {
+		expect(CATALOG_SORTS.map((s) => s.key)).toEqual(['newest', 'name', 'top', 'most_reviewed']);
+	});
+});
+
+describe('isFiltered', () => {
+	it('is false for the default query and for sort-only changes', () => {
+		expect(isFiltered({ q: '', formats: [], scents: [], sort: 'newest' })).toBe(false);
+		expect(isFiltered({ q: '', formats: [], scents: [], sort: 'top' })).toBe(false);
+	});
+	it('is true when q, a format, or a scent narrows the set', () => {
+		expect(isFiltered({ q: 'x', formats: [], scents: [], sort: 'newest' })).toBe(true);
+		expect(isFiltered({ q: '', formats: ['stick'], scents: [], sort: 'newest' })).toBe(true);
+		expect(isFiltered({ q: '', formats: [], scents: ['floral'], sort: 'newest' })).toBe(true);
 	});
 });
