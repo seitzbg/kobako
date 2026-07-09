@@ -1,7 +1,15 @@
 import { and, or, eq, ilike, inArray, sql, type SQL } from 'drizzle-orm';
 import { db } from './client';
-import { incense, reviews, users, type Incense, type Review } from './schema';
-import type { IncenseInput, ReviewInput, Format, ScentFamily, CatalogFilters } from '$lib/incense';
+import { incense, reviews, users, collection, type Incense, type Review } from './schema';
+import type {
+	IncenseInput,
+	ReviewInput,
+	CatalogFilters,
+	CollectionStatus,
+	IncenseSummary
+} from '$lib/incense';
+
+export type { IncenseSummary } from '$lib/incense';
 
 export async function createIncense(
 	input: IncenseInput,
@@ -43,29 +51,25 @@ export async function updateIncense(id: string, input: IncenseInput): Promise<In
 	return row;
 }
 
-export type IncenseSummary = {
-	id: string;
-	name: string;
-	brand: string | null;
-	format: Format | null;
-	scentFamily: ScentFamily | null;
-	imagePath: string | null;
-	reviewCount: number;
-	avgOverall: number | null;
-};
-
 // Escape LIKE/ILIKE wildcards so user-supplied text matches literally.
 // Postgres uses backslash as the default ESCAPE character.
 export function escapeLike(s: string): string {
 	return s.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
-const EMPTY_FILTERS: CatalogFilters = { q: '', formats: [], scents: [], sort: 'newest' };
+const EMPTY_FILTERS: CatalogFilters = {
+	q: '',
+	formats: [],
+	scents: [],
+	statuses: [],
+	sort: 'newest'
+};
 
 export async function listIncenseSummaries(
+	userId: string,
 	filters: CatalogFilters = EMPTY_FILTERS
 ): Promise<IncenseSummary[]> {
-	const { formats, scents, sort } = filters;
+	const { formats, scents, statuses, sort } = filters;
 	const term = filters.q.trim();
 
 	const conditions: SQL[] = [];
@@ -83,6 +87,7 @@ export async function listIncenseSummaries(
 	}
 	if (formats.length) conditions.push(inArray(incense.format, formats));
 	if (scents.length) conditions.push(inArray(incense.scentFamily, scents));
+	if (statuses.length) conditions.push(inArray(collection.status, statuses));
 
 	const avg = sql`avg(${reviews.overall})`;
 	const cnt = sql`count(${reviews.id})`;
@@ -105,10 +110,12 @@ export async function listIncenseSummaries(
 			scentFamily: incense.scentFamily,
 			imagePath: incense.imagePath,
 			reviewCount: sql<number>`count(${reviews.id})::int`,
-			avgOverall: sql<number | null>`round(avg(${reviews.overall}), 1)::float8`
+			avgOverall: sql<number | null>`round(avg(${reviews.overall}), 1)::float8`,
+			myStatus: sql<CollectionStatus | null>`max(${collection.status})`
 		})
 		.from(incense)
 		.leftJoin(reviews, eq(reviews.incenseId, incense.id))
+		.leftJoin(collection, and(eq(collection.incenseId, incense.id), eq(collection.userId, userId)))
 		.where(conditions.length ? and(...conditions) : undefined)
 		.groupBy(incense.id)
 		.orderBy(...orderBy);
@@ -126,6 +133,48 @@ export async function listReviewsForIncense(id: string): Promise<ReviewWithUser[
 		.where(eq(reviews.incenseId, id))
 		.orderBy(users.username);
 	return rows.map((r) => ({ ...r.review, username: r.username }));
+}
+
+export async function setCollectionStatus(
+	incenseId: string,
+	userId: string,
+	status: CollectionStatus | null
+): Promise<void> {
+	if (status === null) {
+		await db
+			.delete(collection)
+			.where(and(eq(collection.incenseId, incenseId), eq(collection.userId, userId)));
+		return;
+	}
+	await db
+		.insert(collection)
+		.values({ incenseId, userId, status })
+		.onConflictDoUpdate({
+			target: [collection.incenseId, collection.userId],
+			set: { status, updatedAt: new Date() }
+		});
+}
+
+export async function getMyCollectionStatus(
+	incenseId: string,
+	userId: string
+): Promise<CollectionStatus | undefined> {
+	const [row] = await db
+		.select({ status: collection.status })
+		.from(collection)
+		.where(and(eq(collection.incenseId, incenseId), eq(collection.userId, userId)));
+	return row?.status;
+}
+
+export async function listCollectionForIncense(
+	incenseId: string
+): Promise<{ username: string; status: CollectionStatus }[]> {
+	return db
+		.select({ username: users.username, status: collection.status })
+		.from(collection)
+		.innerJoin(users, eq(users.id, collection.userId))
+		.where(eq(collection.incenseId, incenseId))
+		.orderBy(users.username);
 }
 
 export async function upsertReview(

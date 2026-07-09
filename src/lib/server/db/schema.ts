@@ -111,8 +111,33 @@ export const reviews = pgTable(
 	]
 );
 
+export const collectionStatusEnum = pgEnum('collection_status', [
+	'owned',
+	'wishlist',
+	'sample',
+	'used_up'
+]);
+
+export const collection = pgTable(
+	'collection',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		incenseId: uuid('incense_id')
+			.notNull()
+			.references(() => incense.id, { onDelete: 'cascade' }),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		status: collectionStatusEnum('status').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [unique('collection_incense_user_unique').on(t.incenseId, t.userId)]
+);
+
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Invite = typeof invites.$inferSelect;
 export type Incense = typeof incense.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
+export type Collection = typeof collection.$inferSelect;

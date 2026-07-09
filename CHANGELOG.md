@@ -33,3 +33,7 @@ All notable changes to this project are documented here. Format based on
   filtering by format and scent family; and sorting by newest, name, top-rated,
   or most-reviewed. Filters live in the URL (shareable, bookmarkable) and work
   without JavaScript.
+- **Collection status** — mark catalog items as owned / wishlist / sample / used-up.
+  Status is shared (the group sees who owns/wants each item on the detail page),
+  settable from the detail page and inline from the catalog grid, filterable via a
+  "My collection" facet, with a dedicated `/collection` page grouped by status.

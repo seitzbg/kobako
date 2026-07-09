@@ -4,8 +4,11 @@ import {
 	SCENT_FAMILIES,
 	SCORE_AXES,
 	CATALOG_SORTS,
+	COLLECTION_STATUSES,
 	formatLabel,
 	scentFamilyLabel,
+	collectionStatusLabel,
+	parseCollectionStatus,
 	parseIncenseForm,
 	parseReviewForm,
 	parseCatalogQuery,
@@ -138,7 +141,7 @@ describe('parseCatalogQuery', () => {
 	const parse = (qs: string) => parseCatalogQuery(new URLSearchParams(qs));
 
 	it('defaults to an empty, newest query', () => {
-		expect(parse('')).toEqual({ q: '', formats: [], scents: [], sort: 'newest' });
+		expect(parse('')).toEqual({ q: '', formats: [], scents: [], statuses: [], sort: 'newest' });
 	});
 
 	it('reads and trims q, caps at 100 chars', () => {
@@ -165,12 +168,53 @@ describe('parseCatalogQuery', () => {
 
 describe('isFiltered', () => {
 	it('is false for the default query and for sort-only changes', () => {
-		expect(isFiltered({ q: '', formats: [], scents: [], sort: 'newest' })).toBe(false);
-		expect(isFiltered({ q: '', formats: [], scents: [], sort: 'top' })).toBe(false);
+		expect(isFiltered({ q: '', formats: [], scents: [], statuses: [], sort: 'newest' })).toBe(
+			false
+		);
+		expect(isFiltered({ q: '', formats: [], scents: [], statuses: [], sort: 'top' })).toBe(false);
 	});
 	it('is true when q, a format, or a scent narrows the set', () => {
-		expect(isFiltered({ q: 'x', formats: [], scents: [], sort: 'newest' })).toBe(true);
-		expect(isFiltered({ q: '', formats: ['stick'], scents: [], sort: 'newest' })).toBe(true);
-		expect(isFiltered({ q: '', formats: [], scents: ['floral'], sort: 'newest' })).toBe(true);
+		expect(isFiltered({ q: 'x', formats: [], scents: [], statuses: [], sort: 'newest' })).toBe(
+			true
+		);
+		expect(
+			isFiltered({ q: '', formats: ['stick'], scents: [], statuses: [], sort: 'newest' })
+		).toBe(true);
+		expect(
+			isFiltered({ q: '', formats: [], scents: ['floral'], statuses: [], sort: 'newest' })
+		).toBe(true);
+	});
+});
+
+describe('collection status helpers', () => {
+	it('exposes the four statuses in order', () => {
+		expect(COLLECTION_STATUSES).toEqual(['owned', 'wishlist', 'sample', 'used_up']);
+	});
+	it('labels statuses and dashes the unknown', () => {
+		expect(collectionStatusLabel('used_up')).toBe('Used up');
+		expect(collectionStatusLabel('owned')).toBe('Owned');
+		expect(collectionStatusLabel(null)).toBe('—');
+	});
+	it('parses a valid status and nulls anything else (never throws)', () => {
+		expect(parseCollectionStatus('wishlist')).toBe('wishlist');
+		expect(parseCollectionStatus('  sample  ')).toBe('sample');
+		expect(parseCollectionStatus('')).toBeNull();
+		expect(parseCollectionStatus('none')).toBeNull();
+		expect(parseCollectionStatus('bogus')).toBeNull();
+	});
+});
+
+describe('parseCatalogQuery — status facet', () => {
+	it('keeps valid statuses, drops unknown, de-dupes', () => {
+		const f = parseCatalogQuery(
+			new URLSearchParams('status=owned&status=owned&status=wishlist&status=nope')
+		);
+		expect(f.statuses).toEqual(['owned', 'wishlist']);
+	});
+	it('defaults to no statuses and reports isFiltered on a status', () => {
+		expect(parseCatalogQuery(new URLSearchParams('')).statuses).toEqual([]);
+		expect(
+			isFiltered({ q: '', formats: [], scents: [], statuses: ['owned'], sort: 'newest' })
+		).toBe(true);
 	});
 });

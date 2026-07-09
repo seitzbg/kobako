@@ -47,6 +47,7 @@
 			{dark ? '☀' : '☾'}
 		</button>
 		{#if data.user}
+			<a href={resolve('/collection')}>Collection</a>
 			<span class="user-chip">Signed in as <strong>{data.user.username}</strong></span>
 			<form method="POST" action="/logout">
 				<button class="btn-quiet" type="submit">Sign out</button>

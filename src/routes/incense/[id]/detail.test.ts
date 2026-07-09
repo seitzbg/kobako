@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { users, incense, reviews, type User } from '$lib/server/db/schema';
+import { users, incense, reviews, collection, type User } from '$lib/server/db/schema';
 import { hashPassword } from '$lib/server/auth/password';
+import { setCollectionStatus } from '$lib/server/db/catalog';
 import { load, actions } from './+page.server';
 
 async function member(): Promise<User> {
@@ -110,5 +111,59 @@ describe('incense review upsert action', () => {
 			locals: { user: u }
 		} as unknown as Parameters<typeof actions.review>[0]);
 		expect((result as { status: number }).status).toBe(400);
+	});
+});
+
+describe('incense detail — collection', () => {
+	function statusReq(id: string, status: string) {
+		const f = new FormData();
+		f.set('status', status);
+		return { params: { id }, request: { formData: async () => f } };
+	}
+
+	it('load returns my status and everyone’s statuses', async () => {
+		const a = await member();
+		const b = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `Col ${Date.now()}_${Math.random()}`, createdBy: a.id })
+			.returning();
+		await setCollectionStatus(item.id, a.id, 'owned');
+		await setCollectionStatus(item.id, b.id, 'wishlist');
+
+		const result = (await load({
+			params: { id: item.id },
+			locals: { user: a }
+		} as unknown as Parameters<typeof load>[0])) as {
+			myStatus: string | undefined;
+			collection: { username: string; status: string }[];
+		};
+		expect(result.myStatus).toBe('owned');
+		expect(
+			result.collection.some((c) => c.username === b.username && c.status === 'wishlist')
+		).toBe(true);
+	});
+
+	it('status action sets then removes my status', async () => {
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `ColAct ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+
+		await actions.status({
+			...statusReq(item.id, 'sample'),
+			locals: { user: u }
+		} as unknown as Parameters<typeof actions.status>[0]);
+		let rows = await db.select().from(collection).where(eq(collection.incenseId, item.id));
+		expect(rows.length).toBe(1);
+		expect(rows[0].status).toBe('sample');
+
+		await actions.status({
+			...statusReq(item.id, ''),
+			locals: { user: u }
+		} as unknown as Parameters<typeof actions.status>[0]);
+		rows = await db.select().from(collection).where(eq(collection.incenseId, item.id));
+		expect(rows.length).toBe(0);
 	});
 });

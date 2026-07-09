@@ -43,6 +43,37 @@ export function scentFamilyLabel(s: ScentFamily | null | undefined): string {
 	return s && s in SCENT_FAMILY_LABELS ? SCENT_FAMILY_LABELS[s] : '—';
 }
 
+export const COLLECTION_STATUSES = ['owned', 'wishlist', 'sample', 'used_up'] as const;
+export type CollectionStatus = (typeof COLLECTION_STATUSES)[number];
+
+const COLLECTION_STATUS_LABELS: Record<CollectionStatus, string> = {
+	owned: 'Owned',
+	wishlist: 'Wishlist',
+	sample: 'Sample',
+	used_up: 'Used up'
+};
+
+export function collectionStatusLabel(s: CollectionStatus | null | undefined): string {
+	return s && s in COLLECTION_STATUS_LABELS ? COLLECTION_STATUS_LABELS[s] : '—';
+}
+
+export function parseCollectionStatus(raw: string): CollectionStatus | null {
+	const v = raw.trim();
+	return COLLECTION_STATUSES.includes(v as CollectionStatus) ? (v as CollectionStatus) : null;
+}
+
+export type IncenseSummary = {
+	id: string;
+	name: string;
+	brand: string | null;
+	format: Format | null;
+	scentFamily: ScentFamily | null;
+	imagePath: string | null;
+	reviewCount: number;
+	avgOverall: number | null;
+	myStatus: CollectionStatus | null;
+};
+
 export type ScoreKey = 'scent' | 'throwSmoke' | 'longevity' | 'value' | 'overall';
 
 export const SCORE_AXES: readonly { key: ScoreKey; label: string }[] = [
@@ -203,6 +234,7 @@ export type CatalogFilters = {
 	q: string;
 	formats: Format[];
 	scents: ScentFamily[];
+	statuses: CollectionStatus[];
 	sort: CatalogSort;
 };
 
@@ -222,11 +254,16 @@ export function parseCatalogQuery(params: URLSearchParams): CatalogFilters {
 			.getAll('scent')
 			.filter((v): v is ScentFamily => SCENT_FAMILIES.includes(v as ScentFamily))
 	);
+	const statuses = dedupe(
+		params
+			.getAll('status')
+			.filter((v): v is CollectionStatus => COLLECTION_STATUSES.includes(v as CollectionStatus))
+	);
 	const sortRaw = params.get('sort') as CatalogSort | null;
 	const sort: CatalogSort = sortRaw && CATALOG_SORT_KEYS.includes(sortRaw) ? sortRaw : 'newest';
-	return { q, formats, scents, sort };
+	return { q, formats, scents, statuses, sort };
 }
 
 export function isFiltered(f: CatalogFilters): boolean {
-	return f.q !== '' || f.formats.length > 0 || f.scents.length > 0;
+	return f.q !== '' || f.formats.length > 0 || f.scents.length > 0 || f.statuses.length > 0;
 }

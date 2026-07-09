@@ -1,10 +1,17 @@
 import { describe, it, expect } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { users, incense, reviews, type User } from '$lib/server/db/schema';
 import { hashPassword } from '$lib/server/auth/password';
-import { listIncenseSummaries } from '$lib/server/db/catalog';
+import {
+	listIncenseSummaries,
+	setCollectionStatus,
+	getMyCollectionStatus,
+	listCollectionForIncense
+} from '$lib/server/db/catalog';
+import { collection } from '$lib/server/db/schema';
 import type { CatalogFilters } from '$lib/incense';
-import { load } from './+page.server';
+import { load, actions as homeActions } from './+page.server';
 
 async function member(): Promise<User> {
 	const [u] = await db
@@ -25,7 +32,7 @@ function marker(): string {
 }
 
 function baseFilters(over: Partial<CatalogFilters> = {}): CatalogFilters {
-	return { q: '', formats: [], scents: [], sort: 'newest', ...over };
+	return { q: '', formats: [], scents: [], statuses: [], sort: 'newest', ...over };
 }
 
 describe('home catalog load', () => {
@@ -95,10 +102,10 @@ describe('listIncenseSummaries filtering', () => {
 			{ name: 'plain four', description: `notes of ${mk}`, createdBy: u.id }
 		]);
 
-		const lower = await listIncenseSummaries(baseFilters({ q: mk }));
+		const lower = await listIncenseSummaries(u.id, baseFilters({ q: mk }));
 		expect(lower).toHaveLength(5);
 
-		const upper = await listIncenseSummaries(baseFilters({ q: mk.toUpperCase() }));
+		const upper = await listIncenseSummaries(u.id, baseFilters({ q: mk.toUpperCase() }));
 		expect(upper).toHaveLength(5);
 	});
 
@@ -111,7 +118,10 @@ describe('listIncenseSummaries filtering', () => {
 			{ name: `${mk} c`, format: 'resin', createdBy: u.id }
 		]);
 
-		const rows = await listIncenseSummaries(baseFilters({ q: mk, formats: ['stick', 'coil'] }));
+		const rows = await listIncenseSummaries(
+			u.id,
+			baseFilters({ q: mk, formats: ['stick', 'coil'] })
+		);
 		expect(rows.map((r) => r.format).sort()).toEqual(['coil', 'stick']);
 	});
 
@@ -125,6 +135,7 @@ describe('listIncenseSummaries filtering', () => {
 		]);
 
 		const rows = await listIncenseSummaries(
+			u.id,
 			baseFilters({ q: mk, formats: ['stick'], scents: ['floral'] })
 		);
 		expect(rows).toHaveLength(1);
@@ -147,7 +158,7 @@ describe('listIncenseSummaries filtering', () => {
 			{ incenseId: lo.id, userId: u.id, overall: 2 }
 		]);
 
-		const rows = await listIncenseSummaries(baseFilters({ q: mk, sort: 'top' }));
+		const rows = await listIncenseSummaries(u.id, baseFilters({ q: mk, sort: 'top' }));
 		expect(rows.map((r) => r.id)).toEqual([hi.id, lo.id, none.id]);
 	});
 
@@ -160,7 +171,7 @@ describe('listIncenseSummaries filtering', () => {
 			{ name: `${mk} cherry`, createdBy: u.id }
 		]);
 
-		const rows = await listIncenseSummaries(baseFilters({ q: mk, sort: 'name' }));
+		const rows = await listIncenseSummaries(u.id, baseFilters({ q: mk, sort: 'name' }));
 		expect(rows.map((r) => r.name)).toEqual([`${mk} Apple`, `${mk} banana`, `${mk} cherry`]);
 	});
 
@@ -176,20 +187,20 @@ describe('listIncenseSummaries filtering', () => {
 		]);
 
 		// % is not a wildcard: "50%" only matches the row with a literal "%".
-		const percentRows = await listIncenseSummaries(baseFilters({ q: `${mk} 50%` }));
+		const percentRows = await listIncenseSummaries(u.id, baseFilters({ q: `${mk} 50%` }));
 		expect(percentRows).toHaveLength(1);
 		expect(percentRows[0].name).toBe(`${mk} 50% off sale`);
 
 		// _ is not a single-char wildcard: "a_b" must not also match "aXb".
 		// Without escaping both rows would match, since _ matches any character.
-		const underscoreRows = await listIncenseSummaries(baseFilters({ q: `${mk} a_b` }));
+		const underscoreRows = await listIncenseSummaries(u.id, baseFilters({ q: `${mk} a_b` }));
 		expect(underscoreRows).toHaveLength(1);
 		expect(underscoreRows[0].name).toBe(`${mk} a_b`);
 
 		// \ is not an escape introducer in the user's term: "a\b" matches the
 		// row containing a literal backslash only. (escapeLike escapes \, %
 		// and _ via the same regex branch, so this exercises that shared path.)
-		const backslashRows = await listIncenseSummaries(baseFilters({ q: `${mk} a\\b` }));
+		const backslashRows = await listIncenseSummaries(u.id, baseFilters({ q: `${mk} a\\b` }));
 		expect(backslashRows).toHaveLength(1);
 		expect(backslashRows[0].name).toBe(`${mk} a\\b`);
 	});
@@ -217,7 +228,7 @@ describe('listIncenseSummaries filtering', () => {
 			{ incenseId: oneReview.id, userId: u3.id, overall: 5 }
 		]);
 
-		const rows = await listIncenseSummaries(baseFilters({ q: mk, sort: 'most_reviewed' }));
+		const rows = await listIncenseSummaries(u1.id, baseFilters({ q: mk, sort: 'most_reviewed' }));
 		expect(rows.map((r) => r.id)).toEqual([twoReviews.id, oneReview.id, noReviews.id]);
 	});
 });
@@ -242,7 +253,13 @@ describe('home catalog load — filters', () => {
 		]);
 
 		const result = await loadWith(u, `?q=${mk}&format=stick&sort=name`);
-		expect(result.filters).toEqual({ q: mk, formats: ['stick'], scents: [], sort: 'name' });
+		expect(result.filters).toEqual({
+			q: mk,
+			formats: ['stick'],
+			scents: [],
+			statuses: [],
+			sort: 'name'
+		});
 		expect(result.items.map((i) => i.name)).toEqual([`${mk} keep`]);
 	});
 
@@ -251,5 +268,136 @@ describe('home catalog load — filters', () => {
 		const result = await loadWith(u, `?q=zzz_no_such_${marker()}`);
 		expect(result.items).toHaveLength(0);
 		expect(result.filters.q).not.toBe('');
+	});
+
+	it('applies the status facet from the URL', async () => {
+		const u = await member();
+		const mk = `mk${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
+		const [own] = await db
+			.insert(incense)
+			.values([
+				{ name: `${mk} own`, createdBy: u.id },
+				{ name: `${mk} plain`, createdBy: u.id }
+			])
+			.returning();
+		await setCollectionStatus(own.id, u.id, 'owned');
+
+		const result = await loadWith(u, `?q=${mk}&status=owned`);
+		expect(result.filters.statuses).toEqual(['owned']);
+		expect(result.items.map((i) => i.id)).toEqual([own.id]);
+	});
+});
+
+describe('collection data access', () => {
+	it('sets, changes, and removes a status (one row per user/item)', async () => {
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `Col ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+
+		await setCollectionStatus(item.id, u.id, 'wishlist');
+		expect(await getMyCollectionStatus(item.id, u.id)).toBe('wishlist');
+
+		await setCollectionStatus(item.id, u.id, 'owned'); // upsert, not duplicate
+		const rows = await db.select().from(collection).where(eq(collection.incenseId, item.id));
+		expect(rows.length).toBe(1);
+		expect(rows[0].status).toBe('owned');
+
+		await setCollectionStatus(item.id, u.id, null); // remove
+		expect(await getMyCollectionStatus(item.id, u.id)).toBeUndefined();
+		expect(
+			(await db.select().from(collection).where(eq(collection.incenseId, item.id))).length
+		).toBe(0);
+	});
+
+	it('lists everyone’s status for an item', async () => {
+		const a = await member();
+		const b = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `Shared ${Date.now()}_${Math.random()}`, createdBy: a.id })
+			.returning();
+		await setCollectionStatus(item.id, a.id, 'owned');
+		await setCollectionStatus(item.id, b.id, 'wishlist');
+
+		const rows = await listCollectionForIncense(item.id);
+		const byUser = Object.fromEntries(rows.map((r) => [r.username, r.status]));
+		expect(byUser[a.username]).toBe('owned');
+		expect(byUser[b.username]).toBe('wishlist');
+	});
+
+	it('summaries carry only the current user’s myStatus', async () => {
+		const a = await member();
+		const b = await member();
+		const mk = `mk${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `${mk} scope`, createdBy: a.id })
+			.returning();
+		await setCollectionStatus(item.id, a.id, 'owned');
+		await setCollectionStatus(item.id, b.id, 'wishlist');
+
+		const asA = await listIncenseSummaries(a.id, baseFilters({ q: mk }));
+		expect(asA.find((i) => i.id === item.id)?.myStatus).toBe('owned');
+		const asB = await listIncenseSummaries(b.id, baseFilters({ q: mk }));
+		expect(asB.find((i) => i.id === item.id)?.myStatus).toBe('wishlist');
+	});
+
+	it('filters by the current user’s status', async () => {
+		const a = await member();
+		const mk = `mk${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
+		const [own, wish] = await db
+			.insert(incense)
+			.values([
+				{ name: `${mk} own`, createdBy: a.id },
+				{ name: `${mk} wish`, createdBy: a.id },
+				{ name: `${mk} none`, createdBy: a.id }
+			])
+			.returning();
+		await setCollectionStatus(own.id, a.id, 'owned');
+		await setCollectionStatus(wish.id, a.id, 'wishlist');
+
+		const rows = await listIncenseSummaries(a.id, baseFilters({ q: mk, statuses: ['owned'] }));
+		expect(rows.map((r) => r.id)).toEqual([own.id]);
+
+		const ownOrWish = await listIncenseSummaries(
+			a.id,
+			baseFilters({ q: mk, statuses: ['owned', 'wishlist'] })
+		);
+		expect(ownOrWish.map((r) => r.id).sort()).toEqual([own.id, wish.id].sort());
+	});
+});
+
+describe('catalog setStatus action', () => {
+	function setReq(incenseId: string, status: string) {
+		const f = new FormData();
+		f.set('incenseId', incenseId);
+		f.set('status', status);
+		return { request: { formData: async () => f } };
+	}
+
+	it('upserts the caller’s status for an item', async () => {
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `Quick ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+
+		await homeActions.setStatus({
+			...setReq(item.id, 'owned'),
+			locals: { user: u }
+		} as unknown as Parameters<typeof homeActions.setStatus>[0]);
+
+		expect(await getMyCollectionStatus(item.id, u.id)).toBe('owned');
+	});
+
+	it('404s an unknown incense', async () => {
+		const u = await member();
+		const result = await homeActions.setStatus({
+			...setReq('00000000-0000-0000-0000-000000000000', 'owned'),
+			locals: { user: u }
+		} as unknown as Parameters<typeof homeActions.setStatus>[0]);
+		expect((result as { status: number }).status).toBe(404);
 	});
 });
