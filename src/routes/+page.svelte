@@ -27,7 +27,7 @@
 {#if data.items.length}
 	<ul class="cards">
 		{#each data.items as item (item.id)}
-			<IncenseCard {item} />
+			<IncenseCard {item} quickSet />
 		{/each}
 	</ul>
 {:else if filtered}

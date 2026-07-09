@@ -1,9 +1,14 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { formatLabel, scentFamilyLabel, collectionStatusLabel } from '$lib/incense';
+	import { enhance } from '$app/forms';
+	import {
+		formatLabel,
+		scentFamilyLabel,
+		collectionStatusLabel,
+		COLLECTION_STATUSES
+	} from '$lib/incense';
 	import type { IncenseSummary } from '$lib/incense';
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- quickSet is wired up in Task 6
 	let { item, quickSet = false }: { item: IncenseSummary; quickSet?: boolean } = $props();
 </script>
 
@@ -29,6 +34,22 @@
 			{/if}
 		</span>
 	</a>
+	{#if quickSet}
+		<form method="POST" action="?/setStatus" use:enhance class="quick-set">
+			<input type="hidden" name="incenseId" value={item.id} />
+			<label class="visually-hidden" for={`qs-${item.id}`}>Collection status</label>
+			<select
+				id={`qs-${item.id}`}
+				name="status"
+				value={item.myStatus ?? ''}
+				onchange={(e) => e.currentTarget.form?.requestSubmit()}
+			>
+				<option value="">— not in collection</option>
+				{#each COLLECTION_STATUSES as s (s)}<option value={s}>{collectionStatusLabel(s)}</option
+					>{/each}
+			</select>
+		</form>
+	{/if}
 </li>
 
 <style>
@@ -91,5 +112,23 @@
 		font-size: 0.9rem;
 		color: var(--star);
 		font-weight: 600;
+	}
+	.quick-set {
+		margin-top: 0.5rem;
+	}
+	.quick-set select {
+		font-size: 0.8rem;
+		padding: 0.35rem 0.5rem;
+	}
+	.visually-hidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+		border: 0;
 	}
 </style>

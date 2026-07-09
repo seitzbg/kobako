@@ -11,7 +11,7 @@ import {
 } from '$lib/server/db/catalog';
 import { collection } from '$lib/server/db/schema';
 import type { CatalogFilters } from '$lib/incense';
-import { load } from './+page.server';
+import { load, actions as homeActions } from './+page.server';
 
 async function member(): Promise<User> {
 	const [u] = await db
@@ -367,5 +367,38 @@ describe('collection data access', () => {
 			baseFilters({ q: mk, statuses: ['owned', 'wishlist'] })
 		);
 		expect(ownOrWish.map((r) => r.id).sort()).toEqual([own.id, wish.id].sort());
+	});
+});
+
+describe('catalog setStatus action', () => {
+	function setReq(incenseId: string, status: string) {
+		const f = new FormData();
+		f.set('incenseId', incenseId);
+		f.set('status', status);
+		return { request: { formData: async () => f } };
+	}
+
+	it('upserts the caller’s status for an item', async () => {
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `Quick ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+
+		await homeActions.setStatus({
+			...setReq(item.id, 'owned'),
+			locals: { user: u }
+		} as unknown as Parameters<typeof homeActions.setStatus>[0]);
+
+		expect(await getMyCollectionStatus(item.id, u.id)).toBe('owned');
+	});
+
+	it('404s an unknown incense', async () => {
+		const u = await member();
+		const result = await homeActions.setStatus({
+			...setReq('00000000-0000-0000-0000-000000000000', 'owned'),
+			locals: { user: u }
+		} as unknown as Parameters<typeof homeActions.setStatus>[0]);
+		expect((result as { status: number }).status).toBe(404);
 	});
 });
