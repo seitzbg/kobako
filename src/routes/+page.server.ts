@@ -12,5 +12,5 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 };
 
 export const actions: Actions = {
-	setStatus: (event) => handleSetStatus(event)
+	setStatus: handleSetStatus
 };

@@ -273,8 +273,7 @@ describe('home catalog load — filters', () => {
 	it('applies the status facet from the URL', async () => {
 		const u = await member();
 		const mk = `mk${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- negative control: must exist but not match the status filter
-		const [own, plain] = await db
+		const [own] = await db
 			.insert(incense)
 			.values([
 				{ name: `${mk} own`, createdBy: u.id },
