@@ -62,6 +62,18 @@ export function parseCollectionStatus(raw: string): CollectionStatus | null {
 	return COLLECTION_STATUSES.includes(v as CollectionStatus) ? (v as CollectionStatus) : null;
 }
 
+export type IncenseSummary = {
+	id: string;
+	name: string;
+	brand: string | null;
+	format: Format | null;
+	scentFamily: ScentFamily | null;
+	imagePath: string | null;
+	reviewCount: number;
+	avgOverall: number | null;
+	myStatus: CollectionStatus | null;
+};
+
 export type ScoreKey = 'scent' | 'throwSmoke' | 'longevity' | 'value' | 'overall';
 
 export const SCORE_AXES: readonly { key: ScoreKey; label: string }[] = [

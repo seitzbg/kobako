@@ -6,6 +6,6 @@ import { parseCatalogQuery } from '$lib/incense';
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const user = requireUser(locals);
 	const filters = parseCatalogQuery(url.searchParams);
-	const items = await listIncenseSummaries(filters);
+	const items = await listIncenseSummaries(user.id, filters);
 	return { user: { username: user.username, role: user.role }, items, filters };
 };
