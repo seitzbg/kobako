@@ -55,6 +55,7 @@
 <style>
 	.incense-cell {
 		display: flex;
+		flex-direction: column;
 	}
 	.incense-card {
 		display: flex;
