@@ -38,7 +38,8 @@ describe('home catalog load', () => {
 		await db.insert(reviews).values({ incenseId: item.id, userId: u.id, overall: 4 });
 
 		const result = (await load({
-			locals: { user: u }
+			locals: { user: u },
+			url: new URL('http://localhost/')
 		} as unknown as Parameters<typeof load>[0])) as {
 			items: { id: string; reviewCount: number; avgOverall: number | null }[];
 		};
@@ -61,7 +62,8 @@ describe('home catalog load', () => {
 		await db.insert(reviews).values({ incenseId: item.id, userId: u.id, scent: 4 });
 
 		const result = (await load({
-			locals: { user: u }
+			locals: { user: u },
+			url: new URL('http://localhost/')
 		} as unknown as Parameters<typeof load>[0])) as {
 			items: { id: string; reviewCount: number; avgOverall: number | null }[];
 		};
@@ -73,7 +75,10 @@ describe('home catalog load', () => {
 
 	it('redirects anonymous visitors to /login', async () => {
 		await expect(
-			load({ locals: { user: null } } as unknown as Parameters<typeof load>[0])
+			load({
+				locals: { user: null },
+				url: new URL('http://localhost/')
+			} as unknown as Parameters<typeof load>[0])
 		).rejects.toMatchObject({ status: 303, location: '/login' });
 	});
 });
@@ -214,5 +219,37 @@ describe('listIncenseSummaries filtering', () => {
 
 		const rows = await listIncenseSummaries(baseFilters({ q: mk, sort: 'most_reviewed' }));
 		expect(rows.map((r) => r.id)).toEqual([twoReviews.id, oneReview.id, noReviews.id]);
+	});
+});
+
+describe('home catalog load — filters', () => {
+	async function loadWith(u: User, query: string) {
+		return (await load({
+			locals: { user: u },
+			url: new URL(`http://localhost/${query}`)
+		} as unknown as Parameters<typeof load>[0])) as {
+			items: { id: string; name: string }[];
+			filters: CatalogFilters;
+		};
+	}
+
+	it('applies query params and echoes the parsed filters', async () => {
+		const u = await member();
+		const mk = marker();
+		await db.insert(incense).values([
+			{ name: `${mk} keep`, format: 'stick', createdBy: u.id },
+			{ name: `${mk} drop`, format: 'resin', createdBy: u.id }
+		]);
+
+		const result = await loadWith(u, `?q=${mk}&format=stick&sort=name`);
+		expect(result.filters).toEqual({ q: mk, formats: ['stick'], scents: [], sort: 'name' });
+		expect(result.items.map((i) => i.name)).toEqual([`${mk} keep`]);
+	});
+
+	it('returns an empty item list (with filters set) when nothing matches', async () => {
+		const u = await member();
+		const result = await loadWith(u, `?q=zzz_no_such_${marker()}`);
+		expect(result.items).toHaveLength(0);
+		expect(result.filters.q).not.toBe('');
 	});
 });
