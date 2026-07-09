@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { formatLabel, scentFamilyLabel } from '$lib/incense';
+	import { formatLabel, scentFamilyLabel, isFiltered } from '$lib/incense';
+	import CatalogFilters from '$lib/components/CatalogFilters.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	let filtered = $derived(isFiltered(data.filters));
 </script>
 
 <div class="page-head head-row">
@@ -17,6 +20,8 @@
 		<a class="btn-primary" href={resolve('/incense/new')}>＋ Add incense</a>
 	</div>
 </div>
+
+<CatalogFilters filters={data.filters} count={data.items.length} />
 
 {#if data.items.length}
 	<ul class="cards">
@@ -44,6 +49,15 @@
 			</li>
 		{/each}
 	</ul>
+{:else if filtered}
+	<div class="empty">
+		<div class="mark">香</div>
+		<h2 style="font-size:1.2rem;margin:0">No incense matches these filters</h2>
+		<p>Try removing a filter or clearing your search.</p>
+		<p style="margin-top:1.25rem">
+			<a class="btn" href={resolve('/')}>Clear filters</a>
+		</p>
+	</div>
 {:else}
 	<div class="empty">
 		<div class="mark">香</div>
