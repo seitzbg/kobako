@@ -9,14 +9,14 @@
   - [x] Per-user multi-axis reviews (scent, throw/smoke, longevity, value, overall) + free-text notes
   - [x] Compare everyone's ratings on an item; average + review counts on the grid
   - [ ] Burn log (dated entries under a review)
-  - [ ] Collection status (owned / wishlist / sample / used-up)
+  - [x] Collection status (owned / wishlist / sample / used-up)
   - [ ] Tags
   - [x] Browse / search / filter (text search, multi-select format & scent facets, sort)
 - [x] Plan 3 — Paste-URL importer: Shopify JSON → schema.org JSON-LD → Open Graph → meta, SSRF guard, local image caching, de-dup by URL + name
 
 ## Next (unshipped v1)
 
-- [ ] Collection status (owned / wishlist / sample / used-up) — pick catalog items into your personal collection
+- [x] Collection status (owned / wishlist / sample / used-up) — pick catalog items into your personal collection
 - [ ] Burn log (dated entries under a review)
 - [ ] Tags
 - [x] Browse / search / filter
