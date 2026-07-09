@@ -60,7 +60,13 @@ export function escapeLike(s: string): string {
 	return s.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
-const EMPTY_FILTERS: CatalogFilters = { q: '', formats: [], scents: [], sort: 'newest' };
+const EMPTY_FILTERS: CatalogFilters = {
+	q: '',
+	formats: [],
+	scents: [],
+	statuses: [],
+	sort: 'newest'
+};
 
 export async function listIncenseSummaries(
 	filters: CatalogFilters = EMPTY_FILTERS

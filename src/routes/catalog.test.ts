@@ -25,7 +25,7 @@ function marker(): string {
 }
 
 function baseFilters(over: Partial<CatalogFilters> = {}): CatalogFilters {
-	return { q: '', formats: [], scents: [], sort: 'newest', ...over };
+	return { q: '', formats: [], scents: [], statuses: [], sort: 'newest', ...over };
 }
 
 describe('home catalog load', () => {
@@ -242,7 +242,13 @@ describe('home catalog load — filters', () => {
 		]);
 
 		const result = await loadWith(u, `?q=${mk}&format=stick&sort=name`);
-		expect(result.filters).toEqual({ q: mk, formats: ['stick'], scents: [], sort: 'name' });
+		expect(result.filters).toEqual({
+			q: mk,
+			formats: ['stick'],
+			scents: [],
+			statuses: [],
+			sort: 'name'
+		});
 		expect(result.items.map((i) => i.name)).toEqual([`${mk} keep`]);
 	});
 
