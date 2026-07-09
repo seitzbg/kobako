@@ -11,6 +11,8 @@ import {
 	parseCollectionStatus,
 	parseIncenseForm,
 	parseReviewForm,
+	parseBurnEntryForm,
+	todayIso,
 	parseCatalogQuery,
 	isFiltered,
 	shopNameFromUrl
@@ -216,5 +218,45 @@ describe('parseCatalogQuery — status facet', () => {
 		expect(
 			isFiltered({ q: '', formats: [], scents: [], statuses: ['owned'], sort: 'newest' })
 		).toBe(true);
+	});
+});
+
+describe('parseBurnEntryForm', () => {
+	it('accepts a full entry', () => {
+		const r = parseBurnEntryForm(fd({ burnedOn: '2020-01-01', rating: '4', notes: 'lovely' }));
+		expect(r).toEqual({ ok: true, value: { burnedOn: '2020-01-01', rating: 4, notes: 'lovely' } });
+	});
+
+	it('accepts a date-only entry (rating and notes optional)', () => {
+		const r = parseBurnEntryForm(fd({ burnedOn: '2020-06-15' }));
+		expect(r).toEqual({ ok: true, value: { burnedOn: '2020-06-15', rating: null, notes: null } });
+	});
+
+	it('requires a date', () => {
+		expect(parseBurnEntryForm(fd({ notes: 'x' })).ok).toBe(false);
+	});
+
+	it('rejects a malformed date', () => {
+		expect(parseBurnEntryForm(fd({ burnedOn: '2026-13-40' })).ok).toBe(false);
+		expect(parseBurnEntryForm(fd({ burnedOn: 'not-a-date' })).ok).toBe(false);
+	});
+
+	it('rejects a future date', () => {
+		expect(parseBurnEntryForm(fd({ burnedOn: '2999-01-01' })).ok).toBe(false);
+	});
+
+	it('rejects an out-of-range or non-integer rating', () => {
+		expect(parseBurnEntryForm(fd({ burnedOn: '2020-01-01', rating: '7' })).ok).toBe(false);
+		expect(parseBurnEntryForm(fd({ burnedOn: '2020-01-01', rating: '2.5' })).ok).toBe(false);
+	});
+
+	it('rejects overly long notes', () => {
+		expect(parseBurnEntryForm(fd({ burnedOn: '2020-01-01', notes: 'x'.repeat(2001) })).ok).toBe(
+			false
+		);
+	});
+
+	it('todayIso returns a YYYY-MM-DD string', () => {
+		expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 	});
 });
