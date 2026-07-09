@@ -11,7 +11,7 @@
   - [ ] Burn log (dated entries under a review)
   - [ ] Collection status (owned / wishlist / sample / used-up)
   - [ ] Tags
-  - [ ] Browse / search / filter
+  - [x] Browse / search / filter (text search, multi-select format & scent facets, sort)
 - [x] Plan 3 — Paste-URL importer: Shopify JSON → schema.org JSON-LD → Open Graph → meta, SSRF guard, local image caching, de-dup by URL + name
 
 ## Next (unshipped v1)
@@ -19,7 +19,7 @@
 - [ ] Collection status (owned / wishlist / sample / used-up) — pick catalog items into your personal collection
 - [ ] Burn log (dated entries under a review)
 - [ ] Tags
-- [ ] Browse / search / filter
+- [x] Browse / search / filter
 
 ## Hardening & follow-ups (from the Plan 1 whole-branch review)
 

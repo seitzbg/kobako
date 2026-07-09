@@ -1,7 +1,7 @@
-import { eq, sql, desc } from 'drizzle-orm';
+import { and, or, eq, ilike, inArray, sql, type SQL } from 'drizzle-orm';
 import { db } from './client';
 import { incense, reviews, users, type Incense, type Review } from './schema';
-import type { IncenseInput, ReviewInput, Format, ScentFamily } from '$lib/incense';
+import type { IncenseInput, ReviewInput, Format, ScentFamily, CatalogFilters } from '$lib/incense';
 
 export async function createIncense(
 	input: IncenseInput,
@@ -54,7 +54,48 @@ export type IncenseSummary = {
 	avgOverall: number | null;
 };
 
-export async function listIncenseSummaries(): Promise<IncenseSummary[]> {
+// Escape LIKE/ILIKE wildcards so user-supplied text matches literally.
+// Postgres uses backslash as the default ESCAPE character.
+export function escapeLike(s: string): string {
+	return s.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
+const EMPTY_FILTERS: CatalogFilters = { q: '', formats: [], scents: [], sort: 'newest' };
+
+export async function listIncenseSummaries(
+	filters: CatalogFilters = EMPTY_FILTERS
+): Promise<IncenseSummary[]> {
+	const { formats, scents, sort } = filters;
+	const term = filters.q.trim();
+
+	const conditions: SQL[] = [];
+	if (term) {
+		const like = `%${escapeLike(term)}%`;
+		conditions.push(
+			or(
+				ilike(incense.name, like),
+				ilike(incense.brand, like),
+				ilike(incense.origin, like),
+				ilike(incense.ingredients, like),
+				ilike(incense.description, like)
+			)!
+		);
+	}
+	if (formats.length) conditions.push(inArray(incense.format, formats));
+	if (scents.length) conditions.push(inArray(incense.scentFamily, scents));
+
+	const avg = sql`avg(${reviews.overall})`;
+	const cnt = sql`count(${reviews.id})`;
+	const createdDesc = sql`${incense.createdAt} desc`;
+	const orderBy: SQL[] =
+		sort === 'name'
+			? [sql`lower(${incense.name}) asc`]
+			: sort === 'top'
+				? [sql`${avg} desc nulls last`, sql`${cnt} desc`, createdDesc]
+				: sort === 'most_reviewed'
+					? [sql`${cnt} desc`, sql`${avg} desc nulls last`, createdDesc]
+					: [createdDesc];
+
 	const rows = await db
 		.select({
 			id: incense.id,
@@ -68,8 +109,10 @@ export async function listIncenseSummaries(): Promise<IncenseSummary[]> {
 		})
 		.from(incense)
 		.leftJoin(reviews, eq(reviews.incenseId, incense.id))
+		.where(conditions.length ? and(...conditions) : undefined)
 		.groupBy(incense.id)
-		.orderBy(desc(incense.createdAt));
+		.orderBy(...orderBy);
+
 	return rows as IncenseSummary[];
 }
 

@@ -187,3 +187,46 @@ export function shopNameFromUrl(raw: string): string | null {
 		return null;
 	}
 }
+
+export type CatalogSort = 'newest' | 'name' | 'top' | 'most_reviewed';
+
+export const CATALOG_SORTS: readonly { key: CatalogSort; label: string }[] = [
+	{ key: 'newest', label: 'Newest' },
+	{ key: 'name', label: 'Name (A–Z)' },
+	{ key: 'top', label: 'Top rated' },
+	{ key: 'most_reviewed', label: 'Most reviewed' }
+];
+
+const CATALOG_SORT_KEYS = CATALOG_SORTS.map((s) => s.key);
+
+export type CatalogFilters = {
+	q: string;
+	formats: Format[];
+	scents: ScentFamily[];
+	sort: CatalogSort;
+};
+
+const MAX_Q = 100;
+
+function dedupe<T>(xs: T[]): T[] {
+	return [...new Set(xs)];
+}
+
+export function parseCatalogQuery(params: URLSearchParams): CatalogFilters {
+	const q = (params.get('q') ?? '').trim().slice(0, MAX_Q);
+	const formats = dedupe(
+		params.getAll('format').filter((v): v is Format => FORMATS.includes(v as Format))
+	);
+	const scents = dedupe(
+		params
+			.getAll('scent')
+			.filter((v): v is ScentFamily => SCENT_FAMILIES.includes(v as ScentFamily))
+	);
+	const sortRaw = params.get('sort') as CatalogSort | null;
+	const sort: CatalogSort = sortRaw && CATALOG_SORT_KEYS.includes(sortRaw) ? sortRaw : 'newest';
+	return { q, formats, scents, sort };
+}
+
+export function isFiltered(f: CatalogFilters): boolean {
+	return f.q !== '' || f.formats.length > 0 || f.scents.length > 0;
+}
