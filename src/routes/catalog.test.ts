@@ -159,16 +159,60 @@ describe('listIncenseSummaries filtering', () => {
 		expect(rows.map((r) => r.name)).toEqual([`${mk} Apple`, `${mk} banana`, `${mk} cherry`]);
 	});
 
-	it('treats % and _ in the search as literal characters', async () => {
+	it('treats %, _ and \\ in the search as literal characters', async () => {
 		const u = await member();
 		const mk = marker();
 		await db.insert(incense).values([
 			{ name: `${mk} 50% off sale`, createdBy: u.id },
-			{ name: `${mk} 5000 sticks`, createdBy: u.id }
+			{ name: `${mk} 5000 sticks`, createdBy: u.id },
+			{ name: `${mk} a_b`, createdBy: u.id },
+			{ name: `${mk} aXb`, createdBy: u.id },
+			{ name: `${mk} a\\b`, createdBy: u.id }
 		]);
 
-		const rows = await listIncenseSummaries(baseFilters({ q: `${mk} 50%` }));
-		expect(rows).toHaveLength(1);
-		expect(rows[0].name).toBe(`${mk} 50% off sale`);
+		// % is not a wildcard: "50%" only matches the row with a literal "%".
+		const percentRows = await listIncenseSummaries(baseFilters({ q: `${mk} 50%` }));
+		expect(percentRows).toHaveLength(1);
+		expect(percentRows[0].name).toBe(`${mk} 50% off sale`);
+
+		// _ is not a single-char wildcard: "a_b" must not also match "aXb".
+		// Without escaping both rows would match, since _ matches any character.
+		const underscoreRows = await listIncenseSummaries(baseFilters({ q: `${mk} a_b` }));
+		expect(underscoreRows).toHaveLength(1);
+		expect(underscoreRows[0].name).toBe(`${mk} a_b`);
+
+		// \ is not an escape introducer in the user's term: "a\b" matches the
+		// row containing a literal backslash only. (escapeLike escapes \, %
+		// and _ via the same regex branch, so this exercises that shared path.)
+		const backslashRows = await listIncenseSummaries(baseFilters({ q: `${mk} a\\b` }));
+		expect(backslashRows).toHaveLength(1);
+		expect(backslashRows[0].name).toBe(`${mk} a\\b`);
+	});
+
+	it('sort=most_reviewed orders by review count desc, then avg overall desc nulls last', async () => {
+		const u1 = await member();
+		const u2 = await member();
+		const u3 = await member();
+		const mk = marker();
+		const [twoReviews, oneReview, noReviews] = await db
+			.insert(incense)
+			.values([
+				{ name: `${mk} two reviews`, createdBy: u1.id },
+				{ name: `${mk} one review`, createdBy: u1.id },
+				{ name: `${mk} no reviews`, createdBy: u1.id }
+			])
+			.returning();
+		// twoReviews has the most reviews but both leave overall blank, so its
+		// average is null. It must still outrank oneReview (fewer reviews, but
+		// a real average) under most_reviewed — count is the primary key, not
+		// average. noReviews (count 0) must sort last regardless.
+		await db.insert(reviews).values([
+			{ incenseId: twoReviews.id, userId: u1.id, overall: null },
+			{ incenseId: twoReviews.id, userId: u2.id, overall: null },
+			{ incenseId: oneReview.id, userId: u3.id, overall: 5 }
+		]);
+
+		const rows = await listIncenseSummaries(baseFilters({ q: mk, sort: 'most_reviewed' }));
+		expect(rows.map((r) => r.id)).toEqual([twoReviews.id, oneReview.id, noReviews.id]);
 	});
 });
