@@ -1,10 +1,23 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
-	import { SCORE_AXES, formatLabel, scentFamilyLabel } from '$lib/incense';
+	import {
+		SCORE_AXES,
+		COLLECTION_STATUSES,
+		formatLabel,
+		scentFamilyLabel,
+		collectionStatusLabel
+	} from '$lib/incense';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	const byStatus = $derived(
+		COLLECTION_STATUSES.map((s) => ({
+			status: s,
+			users: data.collection.filter((c) => c.status === s).map((c) => c.username)
+		})).filter((g) => g.users.length)
+	);
 
 	const facts = $derived(
 		[
@@ -63,6 +76,38 @@
 		>
 	</p>
 {/if}
+
+<section class="collection card">
+	<h2>Your collection</h2>
+	<form method="POST" action="?/status" use:enhance class="status-control">
+		{#each COLLECTION_STATUSES as s (s)}
+			<button
+				class="status-btn"
+				class:on={data.myStatus === s}
+				type="submit"
+				name="status"
+				value={s}>{collectionStatusLabel(s)}</button
+			>
+		{/each}
+		{#if data.myStatus}
+			<button class="status-btn remove" type="submit" name="status" value="">Remove</button>
+		{/if}
+	</form>
+	{#if form?.statusSaved}<p class="muted saved-note">Saved.</p>{/if}
+
+	{#if byStatus.length}
+		<dl class="in-collections">
+			{#each byStatus as g (g.status)}
+				<div>
+					<dt>{collectionStatusLabel(g.status)}</dt>
+					<dd>{g.users.join(', ')}</dd>
+				</div>
+			{/each}
+		</dl>
+	{:else}
+		<p class="muted">No one has added this to a collection yet.</p>
+	{/if}
+</section>
 
 <h2 style="margin-top:2rem">Everyone's ratings</h2>
 {#if data.reviews.length}
@@ -201,5 +246,53 @@
 		color: var(--ok);
 		background: color-mix(in srgb, var(--ok) 14%, transparent);
 		border-color: color-mix(in srgb, var(--ok) 40%, transparent);
+	}
+	.collection {
+		margin-top: 2rem;
+	}
+	.collection h2 {
+		margin: 0 0 0.75rem;
+	}
+	.status-control {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+	.status-btn {
+		font: inherit;
+		font-size: 0.85rem;
+		width: auto;
+		cursor: pointer;
+		padding: 0.3rem 0.75rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		background: var(--paper-raised);
+		color: var(--ink-soft);
+	}
+	.status-btn.on {
+		color: var(--paper);
+		background: var(--seal);
+		border-color: var(--seal);
+	}
+	.status-btn.remove {
+		color: var(--ink-faint);
+	}
+	.saved-note {
+		margin: 0.5rem 0 0;
+	}
+	.in-collections {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 0.6rem 1.5rem;
+		margin: 1.1rem 0 0;
+	}
+	.in-collections dt {
+		font-size: 0.72rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--ink-soft);
+	}
+	.in-collections dd {
+		margin: 0.15rem 0 0;
 	}
 </style>
