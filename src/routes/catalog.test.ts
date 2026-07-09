@@ -269,6 +269,24 @@ describe('home catalog load — filters', () => {
 		expect(result.items).toHaveLength(0);
 		expect(result.filters.q).not.toBe('');
 	});
+
+	it('applies the status facet from the URL', async () => {
+		const u = await member();
+		const mk = `mk${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- negative control: must exist but not match the status filter
+		const [own, plain] = await db
+			.insert(incense)
+			.values([
+				{ name: `${mk} own`, createdBy: u.id },
+				{ name: `${mk} plain`, createdBy: u.id }
+			])
+			.returning();
+		await setCollectionStatus(own.id, u.id, 'owned');
+
+		const result = await loadWith(u, `?q=${mk}&status=owned`);
+		expect(result.filters.statuses).toEqual(['owned']);
+		expect(result.items.map((i) => i.id)).toEqual([own.id]);
+	});
 });
 
 describe('collection data access', () => {

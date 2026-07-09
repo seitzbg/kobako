@@ -3,10 +3,12 @@
 	import {
 		FORMATS,
 		SCENT_FAMILIES,
+		COLLECTION_STATUSES,
 		CATALOG_SORTS,
 		isFiltered,
 		formatLabel,
-		scentFamilyLabel
+		scentFamilyLabel,
+		collectionStatusLabel
 	} from '$lib/incense';
 	import type { CatalogFilters } from '$lib/incense';
 
@@ -63,6 +65,22 @@
 					onchange={autoSubmit}
 				/>
 				{scentFamilyLabel(s)}
+			</label>
+		{/each}
+	</fieldset>
+
+	<fieldset class="facet">
+		<legend>My collection</legend>
+		{#each COLLECTION_STATUSES as s (s)}
+			<label class="chip" class:on={filters.statuses.includes(s)}>
+				<input
+					type="checkbox"
+					name="status"
+					value={s}
+					checked={filters.statuses.includes(s)}
+					onchange={autoSubmit}
+				/>
+				{collectionStatusLabel(s)}
 			</label>
 		{/each}
 	</fieldset>
