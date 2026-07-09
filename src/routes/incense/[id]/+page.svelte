@@ -134,6 +134,57 @@
 	<p class="muted">No reviews yet — be the first below.</p>
 {/if}
 
+<section class="burn-log">
+	<h2>Burn log</h2>
+	{#if data.burnLog.length}
+		<ul class="burns">
+			{#each data.burnLog as b (b.id)}
+				<li class="burn card">
+					<div class="burn-head">
+						<span><strong>{b.username}</strong> <span class="muted">· {b.burnedOn}</span></span>
+						<span class="burn-head-right">
+							{#if b.rating !== null}<span class="score">★ {b.rating}/5</span>{/if}
+							{#if b.userId === data.currentUserId}
+								<form method="POST" action="?/deleteBurn" use:enhance>
+									<input type="hidden" name="entryId" value={b.id} />
+									<button class="btn-quiet delete-burn" type="submit">Delete</button>
+								</form>
+							{/if}
+						</span>
+					</div>
+					{#if b.notes}<p class="text">{b.notes}</p>{/if}
+				</li>
+			{/each}
+		</ul>
+	{:else}
+		<p class="muted">No burns logged yet.</p>
+	{/if}
+
+	<form method="POST" action="?/burn" use:enhance class="card burn-form">
+		{#if form?.burnError}<p class="alert alert-error">{form.burnError}</p>{/if}
+		{#if form?.burnSaved}<p class="alert saved">Logged.</p>{/if}
+		<div class="burn-fields">
+			<label class="field">
+				<span class="field-label">Date</span>
+				<input type="date" name="burnedOn" value={data.todayIso} max={data.todayIso} required />
+			</label>
+			<label class="field">
+				<span class="field-label">Session rating</span>
+				<select name="rating">
+					<option value="">—</option>
+					{#each [0, 1, 2, 3, 4, 5] as n (n)}<option value={n}>{n}</option>{/each}
+				</select>
+			</label>
+		</div>
+		<div class="field">
+			<label class="field-label" for="burnNotes">Notes</label>
+			<textarea id="burnNotes" name="notes" rows="3" placeholder="How did this session go?"
+			></textarea>
+		</div>
+		<button class="btn-primary" type="submit">Log burn</button>
+	</form>
+</section>
+
 <h2 style="margin-top:2rem">Your review</h2>
 <form method="POST" action="?/review" use:enhance class="card review-form">
 	{#if form?.error}<p class="alert alert-error">{form.error}</p>{/if}
@@ -295,5 +346,49 @@
 	}
 	.in-collections dd {
 		margin: 0.15rem 0 0;
+	}
+	.burn-log {
+		margin-top: 2rem;
+	}
+	.burns {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 1.25rem;
+		display: grid;
+		gap: 0.75rem;
+	}
+	.burn-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+	}
+	.burn-head-right {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		flex: none;
+	}
+	.burn-head-right .score {
+		color: var(--star);
+		font-weight: 600;
+	}
+	.delete-burn {
+		width: auto;
+		font-size: 0.8rem;
+		padding: 0.15rem 0.5rem;
+		cursor: pointer;
+	}
+	.burn-fields {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		margin-bottom: 1rem;
+	}
+	.burn-fields .field {
+		flex: 1 1 140px;
+	}
+	.burn-form {
+		margin-top: 0.5rem;
 	}
 </style>

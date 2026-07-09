@@ -8,7 +8,7 @@
   - [x] Shared catalog CRUD (add / browse / view / edit incense; format + scent-family)
   - [x] Per-user multi-axis reviews (scent, throw/smoke, longevity, value, overall) + free-text notes
   - [x] Compare everyone's ratings on an item; average + review counts on the grid
-  - [ ] Burn log (dated entries under a review)
+  - [x] Burn log (dated entries under a review)
   - [x] Collection status (owned / wishlist / sample / used-up)
   - [ ] Tags
   - [x] Browse / search / filter (text search, multi-select format & scent facets, sort)
@@ -17,7 +17,7 @@
 ## Next (unshipped v1)
 
 - [x] Collection status (owned / wishlist / sample / used-up) — pick catalog items into your personal collection
-- [ ] Burn log (dated entries under a review)
+- [x] Burn log (dated entries under a review)
 - [ ] Tags
 - [x] Browse / search / filter
 
