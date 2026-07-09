@@ -22,7 +22,7 @@
 	let showClear = $derived(isFiltered(filters) || filters.sort !== 'newest');
 </script>
 
-<form class="filters" method="GET" action="/" role="search">
+<form class="filters" method="GET" action={resolve('/')} role="search">
 	<div class="search-row">
 		<input
 			type="search"
