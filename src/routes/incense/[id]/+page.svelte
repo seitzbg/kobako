@@ -142,7 +142,7 @@
 				<li class="burn card">
 					<div class="burn-head">
 						<span><strong>{b.username}</strong> <span class="muted">· {b.burnedOn}</span></span>
-						<span class="burn-head-right">
+						<div class="burn-head-right">
 							{#if b.rating !== null}<span class="score">★ {b.rating}/5</span>{/if}
 							{#if b.userId === data.currentUserId}
 								<form method="POST" action="?/deleteBurn" use:enhance>
@@ -150,7 +150,7 @@
 									<button class="btn-quiet delete-burn" type="submit">Delete</button>
 								</form>
 							{/if}
-						</span>
+						</div>
 					</div>
 					{#if b.notes}<p class="text">{b.notes}</p>{/if}
 				</li>
