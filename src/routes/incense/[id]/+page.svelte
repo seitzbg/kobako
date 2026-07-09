@@ -86,7 +86,8 @@
 				class:on={data.myStatus === s}
 				type="submit"
 				name="status"
-				value={s}>{collectionStatusLabel(s)}</button
+				value={s}
+				aria-pressed={data.myStatus === s}>{collectionStatusLabel(s)}</button
 			>
 		{/each}
 		{#if data.myStatus}
