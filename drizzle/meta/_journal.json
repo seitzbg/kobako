@@ -29,6 +29,13 @@
       "when": 1783575167905,
       "tag": "0003_huge_maelstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783638896744,
+      "tag": "0004_real_scarecrow",
+      "breakpoints": true
     }
   ]
 }

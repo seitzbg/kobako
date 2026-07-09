@@ -7,7 +7,8 @@ import {
 	integer,
 	numeric,
 	unique,
-	check
+	check,
+	date
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -135,9 +136,28 @@ export const collection = pgTable(
 	(t) => [unique('collection_incense_user_unique').on(t.incenseId, t.userId)]
 );
 
+export const burnLog = pgTable(
+	'burn_log',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		incenseId: uuid('incense_id')
+			.notNull()
+			.references(() => incense.id, { onDelete: 'cascade' }),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		burnedOn: date('burned_on', { mode: 'string' }).notNull(),
+		rating: integer('rating'),
+		notes: text('notes'),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [check('burn_log_rating_range', sql`${t.rating} is null or ${t.rating} between 0 and 5`)]
+);
+
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Invite = typeof invites.$inferSelect;
 export type Incense = typeof incense.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type Collection = typeof collection.$inferSelect;
+export type BurnLogEntry = typeof burnLog.$inferSelect;
