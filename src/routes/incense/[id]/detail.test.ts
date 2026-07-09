@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
-import { users, incense, reviews, collection, type User } from '$lib/server/db/schema';
+import { users, incense, reviews, collection, burnLog, type User } from '$lib/server/db/schema';
 import { hashPassword } from '$lib/server/auth/password';
 import { setCollectionStatus } from '$lib/server/db/catalog';
 import { load, actions } from './+page.server';
@@ -165,5 +165,88 @@ describe('incense detail — collection', () => {
 		} as unknown as Parameters<typeof actions.status>[0]);
 		rows = await db.select().from(collection).where(eq(collection.incenseId, item.id));
 		expect(rows.length).toBe(0);
+	});
+});
+
+describe('incense detail — burn log', () => {
+	function burnReq(id: string, entries: Record<string, string>) {
+		const f = new FormData();
+		for (const [k, v] of Object.entries(entries)) f.set(k, v);
+		return { params: { id }, request: { formData: async () => f } };
+	}
+
+	it('load returns the shared burn log and today', async () => {
+		const a = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `BurnLoad ${Date.now()}_${Math.random()}`, createdBy: a.id })
+			.returning();
+		await db
+			.insert(burnLog)
+			.values({ incenseId: item.id, userId: a.id, burnedOn: '2026-01-01', notes: 'first' });
+
+		const result = (await load({
+			params: { id: item.id },
+			locals: { user: a }
+		} as unknown as Parameters<typeof load>[0])) as {
+			burnLog: { notes: string | null }[];
+			todayIso: string;
+		};
+		expect(result.burnLog.some((e) => e.notes === 'first')).toBe(true);
+		expect(result.todayIso).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+	});
+
+	it('burn action adds an entry', async () => {
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `BurnAct ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		await actions.burn({
+			...burnReq(item.id, { burnedOn: '2026-02-02', rating: '3', notes: 'nice' }),
+			locals: { user: u }
+		} as unknown as Parameters<typeof actions.burn>[0]);
+		const rows = await db.select().from(burnLog).where(eq(burnLog.incenseId, item.id));
+		expect(rows.length).toBe(1);
+		expect(rows[0].notes).toBe('nice');
+	});
+
+	it('burn action rejects a future date with 400 and adds nothing', async () => {
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `BurnBad ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		const result = await actions.burn({
+			...burnReq(item.id, { burnedOn: '2999-01-01' }),
+			locals: { user: u }
+		} as unknown as Parameters<typeof actions.burn>[0]);
+		expect((result as { status: number }).status).toBe(400);
+		expect((await db.select().from(burnLog).where(eq(burnLog.incenseId, item.id))).length).toBe(0);
+	});
+
+	it('deleteBurn removes only the caller’s own entry', async () => {
+		const a = await member();
+		const b = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `BurnDel ${Date.now()}_${Math.random()}`, createdBy: a.id })
+			.returning();
+		await db
+			.insert(burnLog)
+			.values({ incenseId: item.id, userId: a.id, burnedOn: '2026-01-01', notes: 'a' });
+		const [entry] = await db.select().from(burnLog).where(eq(burnLog.incenseId, item.id));
+
+		await actions.deleteBurn({
+			...burnReq(item.id, { entryId: entry.id }),
+			locals: { user: b }
+		} as unknown as Parameters<typeof actions.deleteBurn>[0]);
+		expect((await db.select().from(burnLog).where(eq(burnLog.incenseId, item.id))).length).toBe(1);
+
+		await actions.deleteBurn({
+			...burnReq(item.id, { entryId: entry.id }),
+			locals: { user: a }
+		} as unknown as Parameters<typeof actions.deleteBurn>[0]);
+		expect((await db.select().from(burnLog).where(eq(burnLog.incenseId, item.id))).length).toBe(0);
 	});
 });
