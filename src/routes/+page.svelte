@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { formatLabel, scentFamilyLabel, isFiltered } from '$lib/incense';
+	import { isFiltered } from '$lib/incense';
 	import CatalogFilters from '$lib/components/CatalogFilters.svelte';
+	import IncenseCard from '$lib/components/IncenseCard.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -26,27 +27,7 @@
 {#if data.items.length}
 	<ul class="cards">
 		{#each data.items as item (item.id)}
-			<li>
-				<a class="incense-card" href={resolve('/incense/[id]', { id: item.id })}>
-					{#if item.imagePath}<img class="thumb" src={`/media/${item.imagePath}`} alt="" />{/if}
-					<span class="name">{item.name}</span>
-					{#if item.brand}<span class="brand muted">{item.brand}</span>{/if}
-					<span class="meta">
-						{#if item.format}<span class="badge badge-used">{formatLabel(item.format)}</span>{/if}
-						{#if item.scentFamily}<span class="tag">{scentFamilyLabel(item.scentFamily)}</span>{/if}
-					</span>
-					<span class="score">
-						{#if item.reviewCount === 0}
-							<span class="muted">No reviews yet</span>
-						{:else}
-							{#if item.avgOverall !== null}★ {item.avgOverall} <span class="muted">·</span>
-							{/if}
-							<span class="muted">{item.reviewCount} review{item.reviewCount === 1 ? '' : 's'}</span
-							>
-						{/if}
-					</span>
-				</a>
-			</li>
+			<IncenseCard {item} />
 		{/each}
 	</ul>
 {:else if filtered}
@@ -87,57 +68,5 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 		gap: 1rem;
-	}
-	.incense-card {
-		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
-		height: 100%;
-		padding: 1.1rem 1.2rem;
-		background: var(--paper-raised);
-		border: 1px solid var(--line);
-		border-radius: var(--radius);
-		box-shadow: var(--shadow-sm);
-		text-decoration: none;
-		color: var(--ink);
-		transition:
-			border-color 0.15s ease,
-			box-shadow 0.15s ease,
-			transform 0.06s ease;
-	}
-	.incense-card:hover {
-		border-color: var(--ink-faint);
-		box-shadow: var(--shadow-md);
-	}
-	.thumb {
-		width: 100%;
-		height: 130px;
-		object-fit: cover;
-		border-radius: var(--radius-sm);
-		margin-bottom: 0.5rem;
-	}
-	.name {
-		font-family: var(--font-serif);
-		font-size: 1.15rem;
-		font-weight: 600;
-	}
-	.meta {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-		margin-top: 0.2rem;
-	}
-	.tag {
-		font-size: 0.75rem;
-		color: var(--ink-soft);
-		border: 1px solid var(--line);
-		border-radius: 999px;
-		padding: 0.1rem 0.5rem;
-	}
-	.score {
-		margin-top: auto;
-		font-size: 0.9rem;
-		color: var(--star);
-		font-weight: 600;
 	}
 </style>
