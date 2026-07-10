@@ -11,6 +11,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		formats: [],
 		scents: [],
 		statuses: [...COLLECTION_STATUSES],
+		tags: [],
 		sort: 'newest'
 	});
 	const groups = COLLECTION_STATUSES.map((status) => ({

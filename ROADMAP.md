@@ -4,13 +4,13 @@
 
 - [x] Plan 1 — Foundation & auth (invite-only, sessions, roles, app shell)
 - [x] Warm Washi design system — themed UI (washi-paper light + "smoke" dark, toggle), reusable components
-- [ ] Plan 2 — Shared catalog + per-user reviews
+- [x] Plan 2 — Shared catalog + per-user reviews
   - [x] Shared catalog CRUD (add / browse / view / edit incense; format + scent-family)
   - [x] Per-user multi-axis reviews (scent, throw/smoke, longevity, value, overall) + free-text notes
   - [x] Compare everyone's ratings on an item; average + review counts on the grid
   - [x] Burn log (dated entries under a review)
   - [x] Collection status (owned / wishlist / sample / used-up)
-  - [ ] Tags
+  - [x] Tags
   - [x] Browse / search / filter (text search, multi-select format & scent facets, sort)
 - [x] Plan 3 — Paste-URL importer: Shopify JSON → schema.org JSON-LD → Open Graph → meta, SSRF guard, local image caching, de-dup by URL + name
 
@@ -18,7 +18,7 @@
 
 - [x] Collection status (owned / wishlist / sample / used-up) — pick catalog items into your personal collection
 - [x] Burn log (dated entries under a review)
-- [ ] Tags
+- [x] Tags
 - [x] Browse / search / filter
 
 ## Hardening & follow-ups (from the Plan 1 whole-branch review)

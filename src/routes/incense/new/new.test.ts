@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/client';
 import { users, incense, type User } from '$lib/server/db/schema';
 import { hashPassword } from '$lib/server/auth/password';
+import { listTagsForIncense } from '$lib/server/db/tags';
 import { actions } from './+page.server';
 
 async function createMember(): Promise<User> {
@@ -60,5 +61,20 @@ describe('/incense/new create action', () => {
 				locals: { user: null }
 			} as unknown as Parameters<typeof actions.default>[0])
 		).rejects.toMatchObject({ status: 303, location: '/login' });
+	});
+
+	it('persists comma-separated tags on create', async () => {
+		const user = await createMember();
+		const name = `New ${Date.now()}_${Math.random()}`;
+		try {
+			await actions.default({
+				...req({ name, tags: 'Gift, Daily, gift' }),
+				locals: { user }
+			} as unknown as Parameters<typeof actions.default>[0]);
+		} catch {
+			// action redirects (303) on success
+		}
+		const [row] = await db.select().from(incense).where(eq(incense.name, name));
+		expect(await listTagsForIncense(row.id)).toEqual(['daily', 'gift']);
 	});
 });

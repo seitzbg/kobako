@@ -1,6 +1,16 @@
-import { and, or, eq, ilike, inArray, sql, type SQL } from 'drizzle-orm';
+import { and, or, eq, ilike, inArray, exists, sql, type SQL } from 'drizzle-orm';
 import { db } from './client';
-import { incense, reviews, users, collection, type Incense, type Review } from './schema';
+import {
+	incense,
+	reviews,
+	users,
+	collection,
+	tags as tagTbl,
+	incenseTags,
+	type Incense,
+	type Review
+} from './schema';
+import { tagsForIncenseIds } from './tags';
 import type {
 	IncenseInput,
 	ReviewInput,
@@ -62,6 +72,7 @@ const EMPTY_FILTERS: CatalogFilters = {
 	formats: [],
 	scents: [],
 	statuses: [],
+	tags: [],
 	sort: 'newest'
 };
 
@@ -88,6 +99,17 @@ export async function listIncenseSummaries(
 	if (formats.length) conditions.push(inArray(incense.format, formats));
 	if (scents.length) conditions.push(inArray(incense.scentFamily, scents));
 	if (statuses.length) conditions.push(inArray(collection.status, statuses));
+	if (filters.tags.length) {
+		conditions.push(
+			exists(
+				db
+					.select({ one: sql`1` })
+					.from(incenseTags)
+					.innerJoin(tagTbl, eq(tagTbl.id, incenseTags.tagId))
+					.where(and(eq(incenseTags.incenseId, incense.id), inArray(tagTbl.name, filters.tags)))
+			)
+		);
+	}
 
 	const avg = sql`avg(${reviews.overall})`;
 	const cnt = sql`count(${reviews.id})`;
@@ -120,7 +142,10 @@ export async function listIncenseSummaries(
 		.groupBy(incense.id)
 		.orderBy(...orderBy);
 
-	return rows as IncenseSummary[];
+	const summaries = rows as IncenseSummary[];
+	const tagMap = await tagsForIncenseIds(summaries.map((s) => s.id));
+	for (const s of summaries) s.tags = tagMap.get(s.id) ?? [];
+	return summaries;
 }
 
 export type ReviewWithUser = Review & { username: string };

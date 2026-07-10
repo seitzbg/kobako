@@ -87,6 +87,15 @@
 			<label class="field-label" for="sourceUrl">Source URL</label>
 			<input id="sourceUrl" name="sourceUrl" value={it.sourceUrl ?? ''} />
 		</div>
+		<div class="field span-2">
+			<label class="field-label" for="tags">Tags</label>
+			<input
+				id="tags"
+				name="tags"
+				value={data.tags.join(', ')}
+				placeholder="comma-separated, e.g. aloeswood, gift, daily"
+			/>
+		</div>
 		<div class="actions span-2">
 			<button class="btn-primary" type="submit">Save changes</button>
 			<a class="btn" href={resolve('/incense/[id]', { id: it.id })}>Cancel</a>

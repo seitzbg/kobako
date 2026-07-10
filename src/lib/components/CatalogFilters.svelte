@@ -12,7 +12,8 @@
 	} from '$lib/incense';
 	import type { CatalogFilters } from '$lib/incense';
 
-	let { filters, count }: { filters: CatalogFilters; count: number } = $props();
+	let { filters, count, allTags }: { filters: CatalogFilters; count: number; allTags: string[] } =
+		$props();
 
 	// Progressive enhancement: with JS, changing any control resubmits the GET
 	// form (SvelteKit intercepts it as a client-side navigation). Without JS, the
@@ -84,6 +85,24 @@
 			</label>
 		{/each}
 	</fieldset>
+
+	{#if allTags.length}
+		<fieldset class="facet">
+			<legend>Tags</legend>
+			{#each allTags as t (t)}
+				<label class="chip" class:on={filters.tags.includes(t)}>
+					<input
+						type="checkbox"
+						name="tag"
+						value={t}
+						checked={filters.tags.includes(t)}
+						onchange={autoSubmit}
+					/>
+					{t}
+				</label>
+			{/each}
+		</fieldset>
+	{/if}
 
 	<div class="controls">
 		<label class="sortby">

@@ -1,7 +1,13 @@
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { requireUser } from '$lib/server/auth/guard';
-import { parseReviewForm, parseCollectionStatus, parseBurnEntryForm, todayIso } from '$lib/incense';
+import {
+	parseReviewForm,
+	parseCollectionStatus,
+	parseBurnEntryForm,
+	todayIso,
+	parseTags
+} from '$lib/incense';
 import {
 	getIncense,
 	listReviewsForIncense,
@@ -11,6 +17,12 @@ import {
 	setCollectionStatus
 } from '$lib/server/db/catalog';
 import { listBurnLogForIncense, addBurnEntry, deleteBurnEntry } from '$lib/server/db/burnLog';
+import {
+	listTagsForIncense,
+	listAllTags,
+	addTagToIncense,
+	removeTagFromIncense
+} from '$lib/server/db/tags';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const user = requireUser(locals);
@@ -24,6 +36,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		myStatus: await getMyCollectionStatus(item.id, user.id),
 		collection: await listCollectionForIncense(item.id),
 		burnLog: await listBurnLogForIncense(item.id),
+		tags: await listTagsForIncense(item.id),
+		allTags: (await listAllTags()).map((t) => t.name),
 		todayIso: todayIso(),
 		currentUserId: user.id
 	};
@@ -66,5 +80,25 @@ export const actions: Actions = {
 		const entryId = String(form.get('entryId') ?? '');
 		if (entryId) await deleteBurnEntry(entryId, user.id);
 		return { burnDeleted: true };
+	},
+	addTag: async ({ params, request, locals }) => {
+		const user = requireUser(locals);
+		const item = await getIncense(params.id);
+		if (!item) throw error(404, 'That incense is not in the catalog.');
+		void user;
+		const form = await request.formData();
+		for (const name of parseTags(String(form.get('tag') ?? ''))) {
+			await addTagToIncense(item.id, name);
+		}
+		return { tagsSaved: true };
+	},
+	removeTag: async ({ params, request, locals }) => {
+		const user = requireUser(locals);
+		const item = await getIncense(params.id);
+		if (!item) throw error(404, 'That incense is not in the catalog.');
+		void user;
+		const form = await request.formData();
+		await removeTagFromIncense(item.id, String(form.get('tag') ?? ''));
+		return { tagsSaved: true };
 	}
 };

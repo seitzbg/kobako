@@ -8,7 +8,8 @@ import {
 	numeric,
 	unique,
 	check,
-	date
+	date,
+	primaryKey
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -154,6 +155,24 @@ export const burnLog = pgTable(
 	(t) => [check('burn_log_rating_range', sql`${t.rating} is null or ${t.rating} between 0 and 5`)]
 );
 
+export const tags = pgTable('tags', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	name: text('name').notNull().unique()
+});
+
+export const incenseTags = pgTable(
+	'incense_tags',
+	{
+		incenseId: uuid('incense_id')
+			.notNull()
+			.references(() => incense.id, { onDelete: 'cascade' }),
+		tagId: uuid('tag_id')
+			.notNull()
+			.references(() => tags.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.incenseId, t.tagId] })]
+);
+
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Invite = typeof invites.$inferSelect;
@@ -161,3 +180,4 @@ export type Incense = typeof incense.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type Collection = typeof collection.$inferSelect;
 export type BurnLogEntry = typeof burnLog.$inferSelect;
+export type Tag = typeof tags.$inferSelect;

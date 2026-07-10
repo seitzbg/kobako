@@ -9,6 +9,7 @@ import {
 	getMyCollectionStatus,
 	listCollectionForIncense
 } from '$lib/server/db/catalog';
+import { setIncenseTags } from '$lib/server/db/tags';
 import { collection } from '$lib/server/db/schema';
 import type { CatalogFilters } from '$lib/incense';
 import { load, actions as homeActions } from './+page.server';
@@ -32,7 +33,7 @@ function marker(): string {
 }
 
 function baseFilters(over: Partial<CatalogFilters> = {}): CatalogFilters {
-	return { q: '', formats: [], scents: [], statuses: [], sort: 'newest', ...over };
+	return { q: '', formats: [], scents: [], statuses: [], tags: [], sort: 'newest', ...over };
 }
 
 describe('home catalog load', () => {
@@ -258,6 +259,7 @@ describe('home catalog load — filters', () => {
 			formats: ['stick'],
 			scents: [],
 			statuses: [],
+			tags: [],
 			sort: 'name'
 		});
 		expect(result.items.map((i) => i.name)).toEqual([`${mk} keep`]);
@@ -399,5 +401,105 @@ describe('catalog setStatus action', () => {
 			locals: { user: u }
 		} as unknown as Parameters<typeof homeActions.setStatus>[0]);
 		expect((result as { status: number }).status).toBe(404);
+	});
+});
+
+describe('listIncenseSummaries — tags', () => {
+	it('filters by tag with OR semantics and attaches each item’s tags', async () => {
+		const u = await member();
+		const tagA = `qa_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		const tagB = `qb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		const [i1] = await db
+			.insert(incense)
+			.values({ name: `T1 ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		const [i2] = await db
+			.insert(incense)
+			.values({ name: `T2 ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		const [i3] = await db
+			.insert(incense)
+			.values({ name: `T3 ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		await setIncenseTags(i1.id, [tagA]);
+		await setIncenseTags(i2.id, [tagB]);
+		// i3 has neither
+
+		const res = await listIncenseSummaries(u.id, {
+			q: '',
+			formats: [],
+			scents: [],
+			statuses: [],
+			tags: [tagA, tagB],
+			sort: 'newest'
+		});
+		const ids = res.map((r) => r.id);
+		expect(ids).toContain(i1.id);
+		expect(ids).toContain(i2.id);
+		expect(ids).not.toContain(i3.id);
+		expect(res.find((r) => r.id === i1.id)?.tags).toEqual([tagA]);
+	});
+
+	it('tag joins do not inflate review count/average', async () => {
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `TAgg ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		await db.insert(reviews).values({ incenseId: item.id, userId: u.id, overall: 4 });
+		await setIncenseTags(item.id, ['agg1', 'agg2', 'agg3']);
+
+		const res = await listIncenseSummaries(u.id, {
+			q: '',
+			formats: [],
+			scents: [],
+			statuses: [],
+			tags: [],
+			sort: 'newest'
+		});
+		const row = res.find((r) => r.id === item.id);
+		expect(row?.reviewCount).toBe(1); // not 3
+		expect(row?.avgOverall).toBe(4); // not corrupted
+		expect(row?.tags).toEqual(['agg1', 'agg2', 'agg3']);
+	});
+
+	it('an active tag filter does not inflate review count/average', async () => {
+		// Guards the critical invariant on the FILTERED path: the tag filter must
+		// stay a correlated EXISTS, never a join into the grouped select. Seed 1
+		// review + 2 tags and filter by BOTH tags: a grouped join would match two
+		// incense_tags rows and count the single review twice (reviewCount 2). The
+		// EXISTS filter matches the row once, so the count stays 1.
+		const u = await member();
+		const tagA = `aggf_${marker()}`;
+		const tagB = `aggf_${marker()}`;
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `TAggFilt ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		await db.insert(reviews).values({ incenseId: item.id, userId: u.id, overall: 4 });
+		await setIncenseTags(item.id, [tagA, tagB]);
+
+		const res = await listIncenseSummaries(u.id, baseFilters({ tags: [tagA, tagB] }));
+		const row = res.find((r) => r.id === item.id);
+		expect(row?.reviewCount).toBe(1);
+		expect(row?.avgOverall).toBe(4);
+	});
+});
+
+describe('catalog load — allTags', () => {
+	it('exposes the in-use tag list for the filter facet', async () => {
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `AllTags ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		const uniq = `af_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		await setIncenseTags(item.id, [uniq]);
+
+		const result = (await load({
+			locals: { user: u },
+			url: new URL('http://localhost/')
+		} as unknown as Parameters<typeof load>[0])) as { allTags: string[] };
+		expect(result.allTags).toContain(uniq);
 	});
 });

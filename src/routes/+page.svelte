@@ -22,7 +22,7 @@
 	</div>
 </div>
 
-<CatalogFilters filters={data.filters} count={data.items.length} />
+<CatalogFilters filters={data.filters} count={data.items.length} allTags={data.allTags} />
 
 {#if data.items.length}
 	<ul class="cards">

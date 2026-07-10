@@ -38,3 +38,6 @@ All notable changes to this project are documented here. Format based on
   settable from the detail page and inline from the catalog grid, filterable via a
   "My collection" facet, with a dedicated `/collection` page grouped by status.
 - **Burn log** — dated burn entries on each incense (date, optional notes, optional 0–5 session rating), shared with the group, on the detail page.
+- **Tags** — free-form, shared tags on catalog items: add/remove on the detail page,
+  filter the catalog by tag, tag chips on grid cards, and a tags field on the add/edit
+  form.

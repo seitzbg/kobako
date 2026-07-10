@@ -4,6 +4,7 @@ import { db } from '$lib/server/db/client';
 import { users, incense, reviews, collection, burnLog, type User } from '$lib/server/db/schema';
 import { hashPassword } from '$lib/server/auth/password';
 import { setCollectionStatus } from '$lib/server/db/catalog';
+import { listTagsForIncense } from '$lib/server/db/tags';
 import { load, actions } from './+page.server';
 
 async function member(): Promise<User> {
@@ -248,5 +249,51 @@ describe('incense detail — burn log', () => {
 			locals: { user: a }
 		} as unknown as Parameters<typeof actions.deleteBurn>[0]);
 		expect((await db.select().from(burnLog).where(eq(burnLog.incenseId, item.id))).length).toBe(0);
+	});
+});
+
+describe('incense detail — tags', () => {
+	function tagReq(id: string, tag: string) {
+		const f = new FormData();
+		f.set('tag', tag);
+		return { params: { id }, request: { formData: async () => f } };
+	}
+
+	it('load returns the item tags and the full tag list', async () => {
+		const a = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `TagLoad ${Date.now()}_${Math.random()}`, createdBy: a.id })
+			.returning();
+		const uniq = `tl_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		const { addTagToIncense } = await import('$lib/server/db/tags');
+		await addTagToIncense(item.id, uniq);
+
+		const result = (await load({
+			params: { id: item.id },
+			locals: { user: a }
+		} as unknown as Parameters<typeof load>[0])) as { tags: string[]; allTags: string[] };
+		expect(result.tags).toContain(uniq);
+		expect(result.allTags).toContain(uniq);
+	});
+
+	it('addTag action adds (comma-separated) tags; removeTag removes one', async () => {
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `TagAct ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+
+		await actions.addTag({
+			...tagReq(item.id, 'Sweet, Resinous'),
+			locals: { user: u }
+		} as unknown as Parameters<typeof actions.addTag>[0]);
+		expect(await listTagsForIncense(item.id)).toEqual(['resinous', 'sweet']);
+
+		await actions.removeTag({
+			...tagReq(item.id, 'sweet'),
+			locals: { user: u }
+		} as unknown as Parameters<typeof actions.removeTag>[0]);
+		expect(await listTagsForIncense(item.id)).toEqual(['resinous']);
 	});
 });

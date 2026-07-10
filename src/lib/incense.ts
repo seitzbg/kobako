@@ -62,6 +62,24 @@ export function parseCollectionStatus(raw: string): CollectionStatus | null {
 	return COLLECTION_STATUSES.includes(v as CollectionStatus) ? (v as CollectionStatus) : null;
 }
 
+export const MAX_TAG_LEN = 40;
+export const MAX_TAGS_PER_ITEM = 20;
+
+export function normalizeTag(raw: string): string | null {
+	const v = raw.trim().toLowerCase().replace(/\s+/g, ' ');
+	return v ? v.slice(0, MAX_TAG_LEN) : null;
+}
+
+export function parseTags(raw: string): string[] {
+	const out: string[] = [];
+	for (const part of raw.split(',')) {
+		const t = normalizeTag(part);
+		if (t && !out.includes(t)) out.push(t);
+		if (out.length >= MAX_TAGS_PER_ITEM) break;
+	}
+	return out;
+}
+
 export type IncenseSummary = {
 	id: string;
 	name: string;
@@ -72,6 +90,7 @@ export type IncenseSummary = {
 	reviewCount: number;
 	avgOverall: number | null;
 	myStatus: CollectionStatus | null;
+	tags: string[];
 };
 
 export type ScoreKey = 'scent' | 'throwSmoke' | 'longevity' | 'value' | 'overall';
@@ -267,6 +286,7 @@ export type CatalogFilters = {
 	formats: Format[];
 	scents: ScentFamily[];
 	statuses: CollectionStatus[];
+	tags: string[];
 	sort: CatalogSort;
 };
 
@@ -291,11 +311,23 @@ export function parseCatalogQuery(params: URLSearchParams): CatalogFilters {
 			.getAll('status')
 			.filter((v): v is CollectionStatus => COLLECTION_STATUSES.includes(v as CollectionStatus))
 	);
+	const tags = dedupe(
+		params
+			.getAll('tag')
+			.map(normalizeTag)
+			.filter((t): t is string => t !== null)
+	);
 	const sortRaw = params.get('sort') as CatalogSort | null;
 	const sort: CatalogSort = sortRaw && CATALOG_SORT_KEYS.includes(sortRaw) ? sortRaw : 'newest';
-	return { q, formats, scents, statuses, sort };
+	return { q, formats, scents, statuses, tags, sort };
 }
 
 export function isFiltered(f: CatalogFilters): boolean {
-	return f.q !== '' || f.formats.length > 0 || f.scents.length > 0 || f.statuses.length > 0;
+	return (
+		f.q !== '' ||
+		f.formats.length > 0 ||
+		f.scents.length > 0 ||
+		f.statuses.length > 0 ||
+		f.tags.length > 0
+	);
 }
