@@ -211,6 +211,38 @@ export function parseReviewForm(form: FormData): Parsed<ReviewInput> {
 	};
 }
 
+export type BurnEntryInput = {
+	burnedOn: string; // 'YYYY-MM-DD'
+	rating: number | null;
+	notes: string | null;
+};
+
+export function todayIso(): string {
+	return new Date().toISOString().slice(0, 10);
+}
+
+function isRealIsoDate(s: string): boolean {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+	const d = new Date(`${s}T00:00:00Z`);
+	return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
+
+export function parseBurnEntryForm(form: FormData): Parsed<BurnEntryInput> {
+	const burnedOn = str(form, 'burnedOn');
+	if (!burnedOn) return { ok: false, error: 'A burn date is required.' };
+	if (!isRealIsoDate(burnedOn)) return { ok: false, error: 'Enter a valid date (YYYY-MM-DD).' };
+	if (burnedOn > todayIso()) return { ok: false, error: 'A burn date cannot be in the future.' };
+
+	const r = parseScore(form, 'rating');
+	if (!r.ok) return { ok: false, error: 'Session rating must be a whole number from 0 to 5.' };
+
+	const notes = nullIfEmpty(str(form, 'notes'));
+	if (notes && notes.length > 2000)
+		return { ok: false, error: 'Notes are too long (max 2000 characters).' };
+
+	return { ok: true, value: { burnedOn, rating: r.value, notes } };
+}
+
 export function shopNameFromUrl(raw: string): string | null {
 	try {
 		return new URL(raw).hostname.replace(/^www\./, '') || null;
