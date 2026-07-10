@@ -62,6 +62,7 @@ const EMPTY_FILTERS: CatalogFilters = {
 	formats: [],
 	scents: [],
 	statuses: [],
+	tags: [],
 	sort: 'newest'
 };
 

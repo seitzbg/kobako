@@ -15,7 +15,11 @@ import {
 	todayIso,
 	parseCatalogQuery,
 	isFiltered,
-	shopNameFromUrl
+	shopNameFromUrl,
+	normalizeTag,
+	parseTags,
+	MAX_TAG_LEN,
+	MAX_TAGS_PER_ITEM
 } from './incense';
 
 function fd(entries: Record<string, string>): FormData {
@@ -143,7 +147,7 @@ describe('parseCatalogQuery', () => {
 	const parse = (qs: string) => parseCatalogQuery(new URLSearchParams(qs));
 
 	it('defaults to an empty, newest query', () => {
-		expect(parse('')).toEqual({ q: '', formats: [], scents: [], statuses: [], sort: 'newest' });
+		expect(parse('')).toEqual({ q: '', formats: [], scents: [], statuses: [], tags: [], sort: 'newest' });
 	});
 
 	it('reads and trims q, caps at 100 chars', () => {
@@ -170,20 +174,20 @@ describe('parseCatalogQuery', () => {
 
 describe('isFiltered', () => {
 	it('is false for the default query and for sort-only changes', () => {
-		expect(isFiltered({ q: '', formats: [], scents: [], statuses: [], sort: 'newest' })).toBe(
+		expect(isFiltered({ q: '', formats: [], scents: [], statuses: [], tags: [], sort: 'newest' })).toBe(
 			false
 		);
-		expect(isFiltered({ q: '', formats: [], scents: [], statuses: [], sort: 'top' })).toBe(false);
+		expect(isFiltered({ q: '', formats: [], scents: [], statuses: [], tags: [], sort: 'top' })).toBe(false);
 	});
 	it('is true when q, a format, or a scent narrows the set', () => {
-		expect(isFiltered({ q: 'x', formats: [], scents: [], statuses: [], sort: 'newest' })).toBe(
+		expect(isFiltered({ q: 'x', formats: [], scents: [], statuses: [], tags: [], sort: 'newest' })).toBe(
 			true
 		);
 		expect(
-			isFiltered({ q: '', formats: ['stick'], scents: [], statuses: [], sort: 'newest' })
+			isFiltered({ q: '', formats: ['stick'], scents: [], statuses: [], tags: [], sort: 'newest' })
 		).toBe(true);
 		expect(
-			isFiltered({ q: '', formats: [], scents: ['floral'], statuses: [], sort: 'newest' })
+			isFiltered({ q: '', formats: [], scents: ['floral'], statuses: [], tags: [], sort: 'newest' })
 		).toBe(true);
 	});
 });
@@ -216,7 +220,7 @@ describe('parseCatalogQuery — status facet', () => {
 	it('defaults to no statuses and reports isFiltered on a status', () => {
 		expect(parseCatalogQuery(new URLSearchParams('')).statuses).toEqual([]);
 		expect(
-			isFiltered({ q: '', formats: [], scents: [], statuses: ['owned'], sort: 'newest' })
+			isFiltered({ q: '', formats: [], scents: [], statuses: ['owned'], tags: [], sort: 'newest' })
 		).toBe(true);
 	});
 });
@@ -258,5 +262,51 @@ describe('parseBurnEntryForm', () => {
 
 	it('todayIso returns a YYYY-MM-DD string', () => {
 		expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+	});
+});
+
+describe('normalizeTag', () => {
+	it('lowercases, trims, and collapses whitespace', () => {
+		expect(normalizeTag('  Aloeswood  ')).toBe('aloeswood');
+		expect(normalizeTag('Special   Occasion')).toBe('special occasion');
+	});
+	it('returns null for empty or whitespace-only input', () => {
+		expect(normalizeTag('')).toBe(null);
+		expect(normalizeTag('   ')).toBe(null);
+	});
+	it('caps length at MAX_TAG_LEN', () => {
+		expect(normalizeTag('x'.repeat(50))).toBe('x'.repeat(MAX_TAG_LEN));
+	});
+});
+
+describe('parseTags', () => {
+	it('splits on commas, normalizes, drops empties, dedupes', () => {
+		expect(parseTags('Aloeswood, gift , , aloeswood, Daily')).toEqual([
+			'aloeswood',
+			'gift',
+			'daily'
+		]);
+	});
+	it('returns [] for a blank field', () => {
+		expect(parseTags('   ')).toEqual([]);
+	});
+	it('caps the number of tags at MAX_TAGS_PER_ITEM', () => {
+		const many = Array.from({ length: 30 }, (_, i) => `t${i}`).join(',');
+		expect(parseTags(many).length).toBe(MAX_TAGS_PER_ITEM);
+	});
+});
+
+describe('parseCatalogQuery tags facet + isFiltered', () => {
+	it('reads repeated tag params, normalized and deduped', () => {
+		const p = new URLSearchParams();
+		p.append('tag', 'Aloeswood');
+		p.append('tag', 'aloeswood');
+		p.append('tag', 'GIFT');
+		expect(parseCatalogQuery(p).tags).toEqual(['aloeswood', 'gift']);
+	});
+	it('isFiltered is true when a tag is selected', () => {
+		const p = new URLSearchParams();
+		p.append('tag', 'gift');
+		expect(isFiltered(parseCatalogQuery(p))).toBe(true);
 	});
 });

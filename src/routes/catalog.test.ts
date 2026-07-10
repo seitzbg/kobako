@@ -32,7 +32,7 @@ function marker(): string {
 }
 
 function baseFilters(over: Partial<CatalogFilters> = {}): CatalogFilters {
-	return { q: '', formats: [], scents: [], statuses: [], sort: 'newest', ...over };
+	return { q: '', formats: [], scents: [], statuses: [], tags: [], sort: 'newest', ...over };
 }
 
 describe('home catalog load', () => {
