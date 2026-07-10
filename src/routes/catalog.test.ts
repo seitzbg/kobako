@@ -258,6 +258,7 @@ describe('home catalog load — filters', () => {
 			formats: ['stick'],
 			scents: [],
 			statuses: [],
+			tags: [],
 			sort: 'name'
 		});
 		expect(result.items.map((i) => i.name)).toEqual([`${mk} keep`]);
