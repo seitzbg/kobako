@@ -463,3 +463,21 @@ describe('listIncenseSummaries — tags', () => {
 		expect(row?.tags).toEqual(['agg1', 'agg2', 'agg3']);
 	});
 });
+
+describe('catalog load — allTags', () => {
+	it('exposes the in-use tag list for the filter facet', async () => {
+		const u = await member();
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `AllTags ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		const uniq = `af_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		await setIncenseTags(item.id, [uniq]);
+
+		const result = (await load({
+			locals: { user: u },
+			url: new URL('http://localhost/')
+		} as unknown as Parameters<typeof load>[0])) as { allTags: string[] };
+		expect(result.allTags).toContain(uniq);
+	});
+});

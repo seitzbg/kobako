@@ -24,6 +24,11 @@
 					>{collectionStatusLabel(item.myStatus)}</span
 				>{/if}
 		</span>
+		{#if item.tags.length}
+			<span class="tags">
+				{#each item.tags as t (t)}<span class="tag">{t}</span>{/each}
+			</span>
+		{/if}
 		<span class="score">
 			{#if item.reviewCount === 0}
 				<span class="muted">No reviews yet</span>
@@ -103,6 +108,11 @@
 		border: 1px solid var(--line);
 		border-radius: 999px;
 		padding: 0.1rem 0.5rem;
+	}
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
 	}
 	.status-badge {
 		color: var(--paper);
