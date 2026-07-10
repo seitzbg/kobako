@@ -13,6 +13,9 @@ All notable changes to this project are documented here. Format based on
 - Containerized app: `@sveltejs/adapter-node` Node server, multi-stage `Dockerfile`,
   and a compose `app` service that auto-applies DB migrations on startup. Runs
   behind a TLS reverse proxy (`ORIGIN` env; configurable `APP_PORT`).
+- **Security hardening** — authed-by-default `(app)` route group, session-validation
+  resilience (a DB blip degrades to logged-out, not a 500), per-IP rate-limiting on
+  login/register, and case-insensitive usernames.
 - **Warm Washi design system** — a themed UI (warm washi-paper light theme and a
   "smoke" dark theme with a toggle) replacing the unstyled default look, with
   reusable card / form / badge / alert / empty-state components.
