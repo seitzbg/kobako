@@ -20,11 +20,13 @@ function fakeCookies() {
 
 function buildEvent(
 	formData: FormData,
-	cookies: Cookies
+	cookies: Cookies,
+	address = `ip_${Date.now()}_${Math.random().toString(36).slice(2)}`
 ): RequestEvent<Record<string, never>, '/register'> {
 	return {
 		request: new Request('http://localhost/register', { method: 'POST', body: formData }),
-		cookies
+		cookies,
+		getClientAddress: () => address
 	} as unknown as RequestEvent<Record<string, never>, '/register'>;
 }
 
@@ -154,5 +156,19 @@ describe('POST /register', () => {
 
 		const [user] = await db.select().from(users).where(eq(users.username, freshUsername));
 		expect(user).toBeDefined();
+	});
+
+	it('returns 429 after too many attempts from one address', async () => {
+		const address = `rl_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		let last: unknown;
+		for (let i = 0; i < 6; i++) {
+			const form = buildForm({
+				invite: 'bogus-token',
+				username: `u_${Date.now()}_${i}`,
+				password: 'hunter2hunter2'
+			});
+			last = await actions.default(buildEvent(form, fakeCookies(), address));
+		}
+		expect((last as { status: number }).status).toBe(429);
 	});
 });

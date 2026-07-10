@@ -6,6 +6,7 @@ import { users } from '$lib/server/db/schema';
 import { hashPassword, verifyPassword } from '$lib/server/auth/password';
 import { generateSessionToken, createSession } from '$lib/server/auth/session';
 import { setSessionCookie } from '$lib/server/auth/cookies';
+import { hit } from '$lib/server/rateLimit';
 
 // A cached hash to verify against when the username is unknown, so response
 // time does not reveal whether an account exists (username-enumeration guard).
@@ -15,7 +16,15 @@ function dummyHash(): Promise<string> {
 }
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, cookies, getClientAddress }) => {
+		const rl = hit(`login:${getClientAddress()}`, 10, 15 * 60 * 1000);
+		if (!rl.allowed) {
+			const mins = Math.ceil(rl.retryAfterSec / 60);
+			return fail(429, {
+				error: `Too many attempts. Try again in about ${mins} minute${mins === 1 ? '' : 's'}.`
+			});
+		}
+
 		const form = await request.formData();
 		const username = String(form.get('username') ?? '').trim();
 		const password = String(form.get('password') ?? '');
