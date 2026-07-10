@@ -99,4 +99,21 @@ describe('POST /login', () => {
 		}
 		expect((last as { status: number }).status).toBe(429);
 	});
+
+	it('logs in case-insensitively', async () => {
+		const mixed = `Case_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		await createUser(mixed, 'hunter2hunter2'); // stored with its capital letters
+		const cookies = fakeCookies();
+		const form = buildForm({ username: mixed.toLowerCase(), password: 'hunter2hunter2' });
+
+		let caught: unknown;
+		try {
+			await actions.default(buildEvent(form, cookies));
+		} catch (e) {
+			caught = e;
+		}
+		if (!isRedirect(caught)) throw new Error('expected a redirect to be thrown');
+		expect(caught.status).toBe(303);
+		expect(cookies.store[SESSION_COOKIE]).toBeDefined();
+	});
 });

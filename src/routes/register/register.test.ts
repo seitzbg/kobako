@@ -171,4 +171,19 @@ describe('POST /register', () => {
 		}
 		expect((last as { status: number }).status).toBe(429);
 	});
+
+	it('rejects a username that duplicates an existing one case-insensitively', async () => {
+		const mixed = `Dupe_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+		await createUser(mixed, 'hunter2hunter2'); // existing 'Dupe_...'
+		const invite = await createInvite(null);
+		const cookies = fakeCookies();
+		const form = buildForm({
+			invite: invite.token,
+			username: mixed.toLowerCase(),
+			password: 'hunter2hunter2'
+		});
+
+		const result = await actions.default(buildEvent(form, cookies));
+		expect((result as { status: number } | undefined)?.status).toBe(400);
+	});
 });

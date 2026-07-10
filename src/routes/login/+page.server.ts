@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import type { Actions } from './$types';
 import { db } from '$lib/server/db/client';
 import { users } from '$lib/server/db/schema';
@@ -29,7 +29,10 @@ export const actions: Actions = {
 		const username = String(form.get('username') ?? '').trim();
 		const password = String(form.get('password') ?? '');
 
-		const [user] = await db.select().from(users).where(eq(users.username, username));
+		const [user] = await db
+			.select()
+			.from(users)
+			.where(sql`lower(${users.username}) = lower(${username})`);
 		const ok = await verifyPassword(user?.passwordHash ?? (await dummyHash()), password);
 		if (!user || !ok) return fail(400, { error: 'Invalid username or password.' });
 
