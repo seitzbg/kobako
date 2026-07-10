@@ -147,7 +147,14 @@ describe('parseCatalogQuery', () => {
 	const parse = (qs: string) => parseCatalogQuery(new URLSearchParams(qs));
 
 	it('defaults to an empty, newest query', () => {
-		expect(parse('')).toEqual({ q: '', formats: [], scents: [], statuses: [], tags: [], sort: 'newest' });
+		expect(parse('')).toEqual({
+			q: '',
+			formats: [],
+			scents: [],
+			statuses: [],
+			tags: [],
+			sort: 'newest'
+		});
 	});
 
 	it('reads and trims q, caps at 100 chars', () => {
@@ -174,15 +181,17 @@ describe('parseCatalogQuery', () => {
 
 describe('isFiltered', () => {
 	it('is false for the default query and for sort-only changes', () => {
-		expect(isFiltered({ q: '', formats: [], scents: [], statuses: [], tags: [], sort: 'newest' })).toBe(
-			false
-		);
-		expect(isFiltered({ q: '', formats: [], scents: [], statuses: [], tags: [], sort: 'top' })).toBe(false);
+		expect(
+			isFiltered({ q: '', formats: [], scents: [], statuses: [], tags: [], sort: 'newest' })
+		).toBe(false);
+		expect(
+			isFiltered({ q: '', formats: [], scents: [], statuses: [], tags: [], sort: 'top' })
+		).toBe(false);
 	});
 	it('is true when q, a format, or a scent narrows the set', () => {
-		expect(isFiltered({ q: 'x', formats: [], scents: [], statuses: [], tags: [], sort: 'newest' })).toBe(
-			true
-		);
+		expect(
+			isFiltered({ q: 'x', formats: [], scents: [], statuses: [], tags: [], sort: 'newest' })
+		).toBe(true);
 		expect(
 			isFiltered({ q: '', formats: ['stick'], scents: [], statuses: [], tags: [], sort: 'newest' })
 		).toBe(true);

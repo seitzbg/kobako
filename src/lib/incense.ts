@@ -312,7 +312,10 @@ export function parseCatalogQuery(params: URLSearchParams): CatalogFilters {
 			.filter((v): v is CollectionStatus => COLLECTION_STATUSES.includes(v as CollectionStatus))
 	);
 	const tags = dedupe(
-		params.getAll('tag').map(normalizeTag).filter((t): t is string => t !== null)
+		params
+			.getAll('tag')
+			.map(normalizeTag)
+			.filter((t): t is string => t !== null)
 	);
 	const sortRaw = params.get('sort') as CatalogSort | null;
 	const sort: CatalogSort = sortRaw && CATALOG_SORT_KEYS.includes(sortRaw) ? sortRaw : 'newest';
