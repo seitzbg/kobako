@@ -36,6 +36,13 @@
       "when": 1783638896744,
       "tag": "0004_real_scarecrow",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783645843803,
+      "tag": "0005_aspiring_frog_thor",
+      "breakpoints": true
     }
   ]
 }
