@@ -4,7 +4,7 @@
 
 - [x] Plan 1 — Foundation & auth (invite-only, sessions, roles, app shell)
 - [x] Warm Washi design system — themed UI (washi-paper light + "smoke" dark, toggle), reusable components
-- [ ] Plan 2 — Shared catalog + per-user reviews
+- [x] Plan 2 — Shared catalog + per-user reviews
   - [x] Shared catalog CRUD (add / browse / view / edit incense; format + scent-family)
   - [x] Per-user multi-axis reviews (scent, throw/smoke, longevity, value, overall) + free-text notes
   - [x] Compare everyone's ratings on an item; average + review counts on the grid

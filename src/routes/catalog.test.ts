@@ -462,6 +462,28 @@ describe('listIncenseSummaries — tags', () => {
 		expect(row?.avgOverall).toBe(4); // not corrupted
 		expect(row?.tags).toEqual(['agg1', 'agg2', 'agg3']);
 	});
+
+	it('an active tag filter does not inflate review count/average', async () => {
+		// Guards the critical invariant on the FILTERED path: the tag filter must
+		// stay a correlated EXISTS, never a join into the grouped select. Seed 1
+		// review + 2 tags and filter by BOTH tags: a grouped join would match two
+		// incense_tags rows and count the single review twice (reviewCount 2). The
+		// EXISTS filter matches the row once, so the count stays 1.
+		const u = await member();
+		const tagA = `aggf_${marker()}`;
+		const tagB = `aggf_${marker()}`;
+		const [item] = await db
+			.insert(incense)
+			.values({ name: `TAggFilt ${Date.now()}_${Math.random()}`, createdBy: u.id })
+			.returning();
+		await db.insert(reviews).values({ incenseId: item.id, userId: u.id, overall: 4 });
+		await setIncenseTags(item.id, [tagA, tagB]);
+
+		const res = await listIncenseSummaries(u.id, baseFilters({ tags: [tagA, tagB] }));
+		const row = res.find((r) => r.id === item.id);
+		expect(row?.reviewCount).toBe(1);
+		expect(row?.avgOverall).toBe(4);
+	});
 });
 
 describe('catalog load — allTags', () => {
