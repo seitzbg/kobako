@@ -90,6 +90,7 @@ export type IncenseSummary = {
 	reviewCount: number;
 	avgOverall: number | null;
 	myStatus: CollectionStatus | null;
+	tags: string[];
 };
 
 export type ScoreKey = 'scent' | 'throwSmoke' | 'longevity' | 'value' | 'overall';
