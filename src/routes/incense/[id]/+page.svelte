@@ -77,6 +77,32 @@
 	</p>
 {/if}
 
+<section class="tags-section">
+	<h2>Tags</h2>
+	{#if data.tags.length}
+		<ul class="tag-list">
+			{#each data.tags as t (t)}
+				<li class="tag-item">
+					<span>{t}</span>
+					<form method="POST" action="?/removeTag" use:enhance>
+						<input type="hidden" name="tag" value={t} />
+						<button class="tag-remove" type="submit" aria-label={`Remove tag ${t}`}>×</button>
+					</form>
+				</li>
+			{/each}
+		</ul>
+	{:else}
+		<p class="muted">No tags yet.</p>
+	{/if}
+	<form method="POST" action="?/addTag" use:enhance class="tag-add">
+		<input name="tag" list="all-tags" placeholder="Add a tag…" aria-label="Add a tag" />
+		<datalist id="all-tags">
+			{#each data.allTags as t (t)}<option value={t}></option>{/each}
+		</datalist>
+		<button class="btn" type="submit">Add</button>
+	</form>
+</section>
+
 <section class="collection card">
 	<h2>Your collection</h2>
 	<form method="POST" action="?/status" use:enhance class="status-control">
@@ -298,6 +324,48 @@
 		color: var(--ok);
 		background: color-mix(in srgb, var(--ok) 14%, transparent);
 		border-color: color-mix(in srgb, var(--ok) 40%, transparent);
+	}
+	.tags-section {
+		margin-top: 2rem;
+	}
+	.tag-list {
+		list-style: none;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		padding: 0;
+		margin: 0 0 0.9rem;
+	}
+	.tag-item {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.8rem;
+		color: var(--ink-soft);
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		padding: 0.15rem 0.3rem 0.15rem 0.7rem;
+	}
+	.tag-remove {
+		width: auto;
+		font-size: 0.95rem;
+		line-height: 1;
+		padding: 0 0.25rem;
+		cursor: pointer;
+		color: var(--ink-faint);
+		background: none;
+		border: 0;
+	}
+	.tag-add {
+		display: flex;
+		gap: 0.5rem;
+		max-width: 24rem;
+	}
+	.tag-add input {
+		flex: 1;
+	}
+	.tag-add .btn {
+		flex: none;
 	}
 	.collection {
 		margin-top: 2rem;
