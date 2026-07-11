@@ -59,3 +59,12 @@ Then visit `/register` and sign up with that token. The **first user ever
 registered** automatically becomes an **admin**, regardless of which invite
 was used. Once signed in as admin, visit `/invites` to generate further,
 single-use invite codes for anyone else you want to give access to.
+
+## Testing
+
+Run tests with `pnpm test`. Each Vitest worker automatically provisions its own
+isolated test database (`kobako_test_w1`, `kobako_test_w2`, etc.) derived from
+`DATABASE_URL`, applies pending migrations, and truncates all tables before
+every test. This ensures tests are order-independent and verifiable in any
+order. The only requirement is a Postgres instance reachable at `DATABASE_URL`
+whose role can `CREATE DATABASE`.
