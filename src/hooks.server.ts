@@ -10,7 +10,19 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	const { session, user } = await validateSessionToken(token);
+	let result: Awaited<ReturnType<typeof validateSessionToken>>;
+	try {
+		result = await validateSessionToken(token);
+	} catch (err) {
+		// A transient DB error must not 500 every request. Degrade to logged-out
+		// but keep the cookie, so the user is logged back in once the DB recovers.
+		console.error('[hooks] session validation failed; degrading to logged-out', err);
+		event.locals.user = null;
+		event.locals.session = null;
+		return resolve(event);
+	}
+
+	const { session, user } = result;
 	if (session) {
 		setSessionCookie(event.cookies, token, session.expiresAt); // refresh sliding expiry
 	} else {

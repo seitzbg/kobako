@@ -47,7 +47,7 @@
 		<div class="rule"></div>
 	</div>
 	<div class="head-actions">
-		<a class="btn" href={resolve('/incense/[id]/edit', { id: data.item.id })}>Edit</a>
+		<a class="btn" href={resolve('/(app)/incense/[id]/edit', { id: data.item.id })}>Edit</a>
 		<a class="btn-quiet" href={resolve('/')}>← Catalog</a>
 	</div>
 </div>

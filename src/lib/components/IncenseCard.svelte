@@ -13,7 +13,7 @@
 </script>
 
 <li class="incense-cell">
-	<a class="incense-card" href={resolve('/incense/[id]', { id: item.id })}>
+	<a class="incense-card" href={resolve('/(app)/incense/[id]', { id: item.id })}>
 		{#if item.imagePath}<img class="thumb" src={`/media/${item.imagePath}`} alt="" />{/if}
 		<span class="name">{item.name}</span>
 		{#if item.brand}<span class="brand muted">{item.brand}</span>{/if}

@@ -98,7 +98,7 @@
 		</div>
 		<div class="actions span-2">
 			<button class="btn-primary" type="submit">Save changes</button>
-			<a class="btn" href={resolve('/incense/[id]', { id: it.id })}>Cancel</a>
+			<a class="btn" href={resolve('/(app)/incense/[id]', { id: it.id })}>Cancel</a>
 		</div>
 	</form>
 </div>

@@ -6,11 +6,20 @@ import { consumeInvite } from '$lib/server/auth/invite';
 import { createUser } from '$lib/server/auth/user';
 import { generateSessionToken, createSession } from '$lib/server/auth/session';
 import { setSessionCookie } from '$lib/server/auth/cookies';
+import { hit } from '$lib/server/rateLimit';
 
 class RegError extends Error {}
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, cookies, getClientAddress }) => {
+		const rl = hit(`register:${getClientAddress()}`, 5, 60 * 60 * 1000);
+		if (!rl.allowed) {
+			const mins = Math.ceil(rl.retryAfterSec / 60);
+			return fail(429, {
+				error: `Too many attempts. Try again in about ${mins} minute${mins === 1 ? '' : 's'}.`
+			});
+		}
+
 		const form = await request.formData();
 		const invite = String(form.get('invite') ?? '');
 		const username = String(form.get('username') ?? '').trim();

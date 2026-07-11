@@ -33,8 +33,8 @@
 		{#if form && 'existing' in form && form.existing}
 			<p class="alert alert-error">
 				Heads up: an item with this source URL is already in the catalog —
-				<a href={resolve('/incense/[id]', { id: form.existing.id })}>view it</a>. Saving will add a
-				second entry.
+				<a href={resolve('/(app)/incense/[id]', { id: form.existing.id })}>view it</a>. Saving will
+				add a second entry.
 			</p>
 		{/if}
 		{#if form && 'imagePath' in form && form.imagePath}

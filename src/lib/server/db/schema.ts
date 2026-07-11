@@ -7,6 +7,7 @@ import {
 	integer,
 	numeric,
 	unique,
+	uniqueIndex,
 	check,
 	date,
 	primaryKey
@@ -15,13 +16,17 @@ import { sql } from 'drizzle-orm';
 
 export const roleEnum = pgEnum('role', ['member', 'admin']);
 
-export const users = pgTable('users', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	username: text('username').notNull().unique(),
-	passwordHash: text('password_hash').notNull(),
-	role: roleEnum('role').notNull().default('member'),
-	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
-});
+export const users = pgTable(
+	'users',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		username: text('username').notNull().unique(),
+		passwordHash: text('password_hash').notNull(),
+		role: roleEnum('role').notNull().default('member'),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [uniqueIndex('users_username_lower_idx').on(sql`lower(${t.username})`)]
+);
 
 export const sessions = pgTable('sessions', {
 	id: text('id').primaryKey(), // sha-256 hash of the session token
