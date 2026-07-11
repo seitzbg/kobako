@@ -44,3 +44,6 @@ All notable changes to this project are documented here. Format based on
 - **Tags** — free-form, shared tags on catalog items: add/remove on the detail page,
   filter the catalog by tag, tag chips on grid cards, and a tags field on the add/edit
   form.
+- **Test isolation** — each Vitest worker gets its own auto-provisioned,
+  auto-migrated database and every test starts from a truncated clean slate, so
+  tests are order-independent and the first-user-becomes-admin path is covered.

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '../db/client';
 import { users, sessions } from '../db/schema';
@@ -12,7 +12,7 @@ import {
 
 let userId: string;
 
-beforeAll(async () => {
+beforeEach(async () => {
 	const [u] = await db
 		.insert(users)
 		.values({

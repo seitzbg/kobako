@@ -27,8 +27,8 @@ Deferred as acceptable for a v1 self-hosted foundation, tracked here so they sta
 
 - [x] **Deployment story (done):** `@sveltejs/adapter-node` Node server, multi-stage `Dockerfile`, and a compose `app` service that auto-migrates on startup; cookie `secure` now derives from `!dev`. Runs behind a TLS reverse proxy (`ORIGIN`, configurable `APP_PORT`).
 - [x] **Defense-in-depth (done):** add `(app)/+layout.server.ts` calling `requireUser`, so any future `(app)/*` route is guarded by default (currently `/invites` self-guards only).
-- **Bootstrap seed:** a `pnpm seed:invite` command so the first admin doesn't need a manual `psql` insert — also gives the first-user-admin branch something to test against.
-- **Test isolation:** per-test transaction or ephemeral schema so tests don't share one mutable DB; add an isolated test that actually exercises the first-user-becomes-admin path; document the git-ignored `.env.test`.
+- [x] **Bootstrap seed (done):** `scripts/seed-invite.mjs` + the `seed:invite` npm script already exist; documented in `README.md`.
+- [x] **Test isolation (done):** per-worker test databases provisioned from `DATABASE_URL` with per-test truncation, ensuring tests are order-independent and the first-user-becomes-admin path is covered; supersedes the `.env.test` idea.
 - [x] **Resilience (done):** wrap `validateSessionToken` in `hooks.server.ts` in try/catch so a transient DB error degrades to logged-out instead of a 500.
 - [x] **Abuse controls (done):** rate-limit `/login` and `/register` (per-IP accuracy requires the reverse proxy's forwarded header be trusted via adapter-node `ADDRESS_HEADER`/`XFF_DEPTH`; otherwise the limiter degrades to a coarse global limit); normalize usernames (case-insensitive).
 - **Polish:** only re-issue the session cookie when the sliding refresh actually extends expiry (avoid `Set-Cookie` on every request); a `GET /logout` currently 500s (POST-only) — add a redirecting `load` or leave POST-only by design.
