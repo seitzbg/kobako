@@ -19,9 +19,26 @@ process.env.DATABASE_URL = base.replace(/\/[^/?]+(\?.*)?$/, `/kobako_test_w${poo
 
 beforeEach(async () => {
 	const { sql } = await import('../lib/server/db/client');
+
+	// Safety guard: the truncation below is only safe if this client actually
+	// connected to a per-worker database. That currently depends on the
+	// test-scoped `resolve.alias` in vite.config.ts continuing to resolve
+	// `$env/dynamic/private` to the shim; if that ever breaks (config refactor,
+	// SvelteKit/Vitest upgrade), the client silently falls back to the base
+	// DATABASE_URL and this would truncate the base database instead of a
+	// throwaway one. Fail loud instead.
+	const [{ current_database: dbName }] = await sql<
+		{ current_database: string }[]
+	>`SELECT current_database()`;
+	if (!/^kobako_test_w\d+$/.test(dbName)) {
+		throw new Error(`Refusing to truncate non-isolated database "${dbName}"`);
+	}
+
+	// drizzle's migrations table lives in the `drizzle` schema, not `public`,
+	// so it's already excluded by the schemaname filter below.
 	const tables = await sql<{ tablename: string }[]>`
 		SELECT tablename FROM pg_tables
-		WHERE schemaname = 'public' AND tablename <> '__drizzle_migrations'`;
+		WHERE schemaname = 'public'`;
 	if (tables.length === 0) return;
 	const list = tables.map((t) => `"${t.tablename}"`).join(', ');
 	await sql.unsafe(`TRUNCATE ${list} RESTART IDENTITY CASCADE`);

@@ -42,6 +42,11 @@ export default defineConfig({
 					setupFiles: ['./src/test/setup.ts'],
 					// Vitest 4 removed `poolOptions` (all sub-options are now top-level); the
 					// forks-pool equivalent of the old minForks/maxForks pin is `maxWorkers`.
+					// This is coupled to the per-worker DB provisioning in globalSetup.ts,
+					// which provisions exactly TEST_DB_WORKERS databases — do not override
+					// piecemeal (e.g. a CLI `--maxWorkers` above this value would let a
+					// worker land on an unprovisioned DB). That fails safe as a connection
+					// error, not data loss, but it's still wrong.
 					maxWorkers: TEST_DB_WORKERS
 				}
 			}
