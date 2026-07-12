@@ -49,4 +49,5 @@ All notable changes to this project are documented here. Format based on
   tests are order-independent and the first-user-becomes-admin path is covered.
 - **UI polish** — the add/edit incense form is grouped into labelled sections (Identity,
   Character, Details, Sourcing & price, Tags) with proper spacing, and the catalog
-  header no longer clips its action buttons on narrow widths.
+  header's primary action buttons render as proper padded buttons and wrap cleanly
+  instead of overflowing.
