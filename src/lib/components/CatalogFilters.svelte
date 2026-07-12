@@ -23,6 +23,9 @@
 	}
 
 	let showClear = $derived(isFiltered(filters) || filters.sort !== 'newest');
+	let activeCount = $derived(
+		filters.formats.length + filters.scents.length + filters.statuses.length + filters.tags.length
+	);
 </script>
 
 <form class="filters" method="GET" action={resolve('/')} role="search">
@@ -38,71 +41,76 @@
 		<button class="btn-primary" type="submit">Apply</button>
 	</div>
 
-	<fieldset class="facet">
-		<legend>Format</legend>
-		{#each FORMATS as f (f)}
-			<label class="chip" class:on={filters.formats.includes(f)}>
-				<input
-					type="checkbox"
-					name="format"
-					value={f}
-					checked={filters.formats.includes(f)}
-					onchange={autoSubmit}
-				/>
-				{formatLabel(f)}
-			</label>
-		{/each}
-	</fieldset>
+	<details class="facets" open={activeCount > 0}>
+		<summary>Filters{activeCount ? ` · ${activeCount}` : ''}</summary>
+		<div class="facet-body">
+			<fieldset class="facet">
+				<legend>Format</legend>
+				{#each FORMATS as f (f)}
+					<label class="chip" class:on={filters.formats.includes(f)}>
+						<input
+							type="checkbox"
+							name="format"
+							value={f}
+							checked={filters.formats.includes(f)}
+							onchange={autoSubmit}
+						/>
+						{formatLabel(f)}
+					</label>
+				{/each}
+			</fieldset>
 
-	<fieldset class="facet">
-		<legend>Scent</legend>
-		{#each SCENT_FAMILIES as s (s)}
-			<label class="chip" class:on={filters.scents.includes(s)}>
-				<input
-					type="checkbox"
-					name="scent"
-					value={s}
-					checked={filters.scents.includes(s)}
-					onchange={autoSubmit}
-				/>
-				{scentFamilyLabel(s)}
-			</label>
-		{/each}
-	</fieldset>
+			<fieldset class="facet">
+				<legend>Scent</legend>
+				{#each SCENT_FAMILIES as s (s)}
+					<label class="chip" class:on={filters.scents.includes(s)}>
+						<input
+							type="checkbox"
+							name="scent"
+							value={s}
+							checked={filters.scents.includes(s)}
+							onchange={autoSubmit}
+						/>
+						{scentFamilyLabel(s)}
+					</label>
+				{/each}
+			</fieldset>
 
-	<fieldset class="facet">
-		<legend>My collection</legend>
-		{#each COLLECTION_STATUSES as s (s)}
-			<label class="chip" class:on={filters.statuses.includes(s)}>
-				<input
-					type="checkbox"
-					name="status"
-					value={s}
-					checked={filters.statuses.includes(s)}
-					onchange={autoSubmit}
-				/>
-				{collectionStatusLabel(s)}
-			</label>
-		{/each}
-	</fieldset>
+			<fieldset class="facet">
+				<legend>My collection</legend>
+				{#each COLLECTION_STATUSES as s (s)}
+					<label class="chip" class:on={filters.statuses.includes(s)}>
+						<input
+							type="checkbox"
+							name="status"
+							value={s}
+							checked={filters.statuses.includes(s)}
+							onchange={autoSubmit}
+						/>
+						{collectionStatusLabel(s)}
+					</label>
+				{/each}
+			</fieldset>
 
-	{#if allTags.length}
-		<fieldset class="facet">
-			<legend>Tags</legend>
-			{#each allTags as t (t)}
-				<label class="chip" class:on={filters.tags.includes(t)}>
-					<input
-						type="checkbox"
-						name="tag"
-						value={t}
-						checked={filters.tags.includes(t)}
-						onchange={autoSubmit}
-					/>
-					{t}
-				</label>
-			{/each}
-		</fieldset>
-	{/if}
+			{#if allTags.length}
+				<fieldset class="facet">
+					<legend>Tags</legend>
+					{#each allTags as t (t)}
+						<label class="chip" class:on={filters.tags.includes(t)}>
+							<input
+								type="checkbox"
+								name="tag"
+								value={t}
+								checked={filters.tags.includes(t)}
+								onchange={autoSubmit}
+							/>
+							{t}
+						</label>
+					{/each}
+				</fieldset>
+			{/if}
+		</div>
+	</details>
 
 	<div class="controls">
 		<label class="sortby">
@@ -136,6 +144,24 @@
 	}
 	.search-row .btn-primary {
 		flex: none;
+	}
+	.facets summary {
+		cursor: pointer;
+		width: fit-content;
+		padding: 0.15rem 0;
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--ink-soft);
+		user-select: none;
+	}
+	.facets summary:hover {
+		color: var(--ink);
+	}
+	.facet-body {
+		display: flex;
+		flex-direction: column;
+		gap: 0.9rem;
+		margin-top: 0.8rem;
 	}
 	.facet {
 		display: flex;

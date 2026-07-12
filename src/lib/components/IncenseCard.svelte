@@ -10,6 +10,16 @@
 	import type { IncenseSummary } from '$lib/incense';
 
 	let { item, quickSet = false }: { item: IncenseSummary; quickSet?: boolean } = $props();
+
+	// Quiet factual line: "Stick · Aloeswood / kyara" (omit whichever is missing).
+	const facts = $derived(
+		[
+			item.format && formatLabel(item.format),
+			item.scentFamily && scentFamilyLabel(item.scentFamily)
+		]
+			.filter(Boolean)
+			.join(' · ')
+	);
 </script>
 
 <li class="incense-cell">
@@ -17,13 +27,7 @@
 		{#if item.imagePath}<img class="thumb" src={`/media/${item.imagePath}`} alt="" />{/if}
 		<span class="name">{item.name}</span>
 		{#if item.brand}<span class="brand muted">{item.brand}</span>{/if}
-		<span class="meta">
-			{#if item.format}<span class="badge badge-used">{formatLabel(item.format)}</span>{/if}
-			{#if item.scentFamily}<span class="tag">{scentFamilyLabel(item.scentFamily)}</span>{/if}
-			{#if item.myStatus}<span class="badge status-badge"
-					>{collectionStatusLabel(item.myStatus)}</span
-				>{/if}
-		</span>
+		{#if facts}<span class="facts muted">{facts}</span>{/if}
 		{#if item.tags.length}
 			<span class="tags">
 				{#each item.tags as t (t)}<span class="tag">{t}</span>{/each}
@@ -40,9 +44,9 @@
 		</span>
 	</a>
 	{#if quickSet}
-		<form method="POST" action="?/setStatus" use:enhance class="quick-set">
+		<form method="POST" action="?/setStatus" use:enhance class="card-footer">
 			<input type="hidden" name="incenseId" value={item.id} />
-			<label class="visually-hidden" for={`qs-${item.id}`}>Collection status</label>
+			<label class="footer-label" for={`qs-${item.id}`}>Collection</label>
 			<select
 				id={`qs-${item.id}`}
 				name="status"
@@ -61,28 +65,27 @@
 	.incense-cell {
 		display: flex;
 		flex-direction: column;
-	}
-	.incense-card {
-		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
-		width: 100%;
-		height: 100%;
-		padding: 1.1rem 1.2rem;
 		background: var(--paper-raised);
 		border: 1px solid var(--line);
 		border-radius: var(--radius);
 		box-shadow: var(--shadow-sm);
-		text-decoration: none;
-		color: var(--ink);
+		overflow: hidden;
 		transition:
 			border-color 0.15s ease,
-			box-shadow 0.15s ease,
-			transform 0.06s ease;
+			box-shadow 0.15s ease;
 	}
-	.incense-card:hover {
+	.incense-cell:hover {
 		border-color: var(--ink-faint);
 		box-shadow: var(--shadow-md);
+	}
+	.incense-card {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 0.4rem;
+		padding: 1.1rem 1.2rem;
+		text-decoration: none;
+		color: var(--ink);
 	}
 	.thumb {
 		width: 100%;
@@ -96,11 +99,14 @@
 		font-size: 1.15rem;
 		font-weight: 600;
 	}
-	.meta {
+	.facts {
+		font-size: 0.85rem;
+	}
+	.tags {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.4rem;
-		margin-top: 0.2rem;
+		gap: 0.3rem;
+		margin-top: 0.1rem;
 	}
 	.tag {
 		font-size: 0.75rem;
@@ -109,37 +115,29 @@
 		border-radius: 999px;
 		padding: 0.1rem 0.5rem;
 	}
-	.tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.3rem;
-	}
-	.status-badge {
-		color: var(--paper);
-		background: var(--seal);
-	}
 	.score {
 		margin-top: auto;
+		padding-top: 0.35rem;
 		font-size: 0.9rem;
 		color: var(--star);
 		font-weight: 600;
 	}
-	.quick-set {
-		margin-top: 0.5rem;
+	.card-footer {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.7rem 1.2rem;
+		border-top: 1px solid var(--line);
+		background: var(--paper-sunk);
 	}
-	.quick-set select {
-		font-size: 0.8rem;
-		padding: 0.35rem 0.5rem;
-	}
-	.visually-hidden {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		margin: -1px;
-		padding: 0;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
+	.footer-label {
+		font-size: 0.78rem;
+		color: var(--ink-soft);
 		white-space: nowrap;
-		border: 0;
+	}
+	.card-footer select {
+		flex: 1;
+		padding: 0.45rem 0.6rem;
+		font-size: 0.85rem;
 	}
 </style>

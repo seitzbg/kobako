@@ -51,3 +51,6 @@ All notable changes to this project are documented here. Format based on
   Character, Details, Sourcing & price, Tags) with proper spacing, and the catalog
   header's primary action buttons render as proper padded buttons and wrap cleanly
   instead of overflowing.
+- **Catalog polish** — cleaner cards (a quiet format · scent line, tags as the only chips,
+  and an integrated styled collection selector) and a compact filter panel whose facets
+  collapse behind a "Filters" disclosure until one is active.
