@@ -18,7 +18,7 @@
 	</div>
 	<div class="head-actions">
 		<a class="btn" href={resolve('/incense/import')}>Import from URL</a>
-		<a class="btn-primary" href={resolve('/incense/new')}>＋ Add incense</a>
+		<a class="btn btn-primary" href={resolve('/incense/new')}>＋ Add incense</a>
 	</div>
 </div>
 
@@ -45,7 +45,7 @@
 		<h2 style="font-size:1.2rem;margin:0">Your catalog is empty</h2>
 		<p>Add your first incense to begin — then rate it and write a review.</p>
 		<p style="margin-top:1.25rem">
-			<a class="btn-primary" href={resolve('/incense/new')}>＋ Add incense</a>
+			<a class="btn btn-primary" href={resolve('/incense/new')}>＋ Add incense</a>
 		</p>
 	</div>
 {/if}
@@ -53,6 +53,7 @@
 <style>
 	.head-row {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: 1rem;

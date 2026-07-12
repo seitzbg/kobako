@@ -36,7 +36,7 @@
 		<h2 style="font-size:1.2rem;margin:0">Your collection is empty</h2>
 		<p>Mark items as owned, wishlist, sample, or used-up from the catalog.</p>
 		<p style="margin-top:1.25rem">
-			<a class="btn-primary" href={resolve('/')}>Browse the catalog</a>
+			<a class="btn btn-primary" href={resolve('/')}>Browse the catalog</a>
 		</p>
 	</div>
 {/if}

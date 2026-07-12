@@ -47,3 +47,7 @@ All notable changes to this project are documented here. Format based on
 - **Test isolation** — each Vitest worker gets its own auto-provisioned,
   auto-migrated database and every test starts from a truncated clean slate, so
   tests are order-independent and the first-user-becomes-admin path is covered.
+- **UI polish** — the add/edit incense form is grouped into labelled sections (Identity,
+  Character, Details, Sourcing & price, Tags) with proper spacing, and the catalog
+  header's primary action buttons render as proper padded buttons and wrap cleanly
+  instead of overflowing.
