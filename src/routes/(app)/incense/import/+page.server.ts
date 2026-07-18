@@ -2,7 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { requireUser } from '$lib/server/auth/guard';
 import { parseIncenseForm, shopNameFromUrl } from '$lib/incense';
-import { assertPublicUrl, SsrfError } from '$lib/server/import/ssrf';
+import { assertPublicUrl, SsrfError, FetchError } from '$lib/server/import/ssrf';
 import { extractProduct } from '$lib/server/import/extract';
 import { cacheImage } from '$lib/server/import/images';
 import { DATA_DIR } from '$lib/server/config';
@@ -29,10 +29,15 @@ export const actions: Actions = {
 		let extracted;
 		try {
 			extracted = await extractProduct(url);
-		} catch {
-			// Never a dead end — degrade to manual entry with the URL kept.
+		} catch (e) {
+			// Never a dead end — degrade to manual entry with the URL kept, but say
+			// why, so a blocked shop doesn't look like a form that just came back blank.
 			return {
 				stage: 'confirm',
+				error:
+					e instanceof FetchError
+						? `Couldn't read that page (${e.message}) — fill in the details yourself.`
+						: "Couldn't read that page — fill in the details yourself.",
 				prefill: { sourceUrl: url, sourceShop: shopNameFromUrl(url) },
 				imagePath: null,
 				existing
@@ -45,10 +50,16 @@ export const actions: Actions = {
 		// pasted from a different (e.g. mirrored) URL.
 		const existingByName =
 			!existing && extracted.name ? ((await findSimilarByName(extracted.name)) ?? null) : null;
+		// A 200 that carries no product metadata at all is indistinguishable, to the
+		// user, from the form silently coming back blank — so name that case too.
+		const foundNothing = !Object.values(extracted).some((v) => v !== null);
 		return {
 			stage: 'confirm',
 			imagePath,
 			existing: existing ?? existingByName,
+			...(foundNothing
+				? { error: "That page didn't expose any product details — fill them in yourself." }
+				: {}),
 			prefill: {
 				name: extracted.name,
 				brand: extracted.brand,

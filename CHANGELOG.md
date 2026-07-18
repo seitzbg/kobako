@@ -54,3 +54,20 @@ All notable changes to this project are documented here. Format based on
 - **Catalog polish** — cleaner cards (a quiet format · scent line, tags as the only chips,
   and an integrated styled collection selector) and a compact filter panel whose facets
   collapse behind a "Filters" disclosure until one is active.
+
+### Fixed
+
+- **Importer returned a silently blank form.** `safeFetch` never checked the HTTP
+  status, so a shop's error body (e.g. Cloudflare's 18-byte `local_rate_limited`)
+  was parsed as though it were the product page, yielding an all-null product and
+  a confirm form with every field empty and no explanation. Non-2xx responses now
+  raise a `FetchError` and the import degrades to manual entry _with the reason
+  shown_; a 200 carrying no product metadata is called out too.
+- **Importer could not reach Cloudflare-fronted shops.** Node's global `fetch`
+  (undici) presents a TLS fingerprint that Cloudflare answers with `429
+local_rate_limited`; measured from the deploy host against the same URL in the
+  same second, `node:https` returned 200 where undici returned 429, with either a
+  bot or a browser User-Agent. The importer now uses `node:https` (handling
+  gzip/deflate/br itself) and keeps a self-identifying User-Agent. All SSRF
+  guarantees are unchanged: every redirect hop is re-validated, and the size cap
+  and timeout still apply.
