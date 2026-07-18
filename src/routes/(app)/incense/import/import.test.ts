@@ -71,6 +71,24 @@ describe('/incense/import save action', () => {
 		expect((res as { status: number }).status).toBe(400);
 	});
 
+	// Regression: a shop that 429s/404s used to have its error body parsed as
+	// product HTML, landing the user on a wholly blank confirm form with no
+	// explanation. The URL must still be kept so manual entry isn't a dead end.
+	it('fetch action explains itself when the page cannot be read', async () => {
+		const u = await member();
+		const res = (await actions.fetch({
+			...form({ url: 'https://github.com/kobako-does-not-exist-xyz' }),
+			locals: { user: u }
+		} as unknown as Parameters<typeof actions.fetch>[0])) as {
+			error?: string;
+			prefill: { name?: string | null; sourceUrl: string };
+		};
+		expect(res.error).toBeTruthy();
+		expect(res.error).toMatch(/404/);
+		expect(res.prefill.name ?? null).toBeNull();
+		expect(res.prefill.sourceUrl).toBe('https://github.com/kobako-does-not-exist-xyz');
+	});
+
 	it('fetch action redirects an anonymous visitor', async () => {
 		await expect(
 			actions.fetch({
